@@ -17,14 +17,6 @@ Reproducible installs for contributors | Everything packaged via a flake; CI run
 Minimal runtime deps | Rust daemons + PipeWire/UPower bindings only when needed
 Modern CLI ergonomics | Nushell wrappers & fernctl Rust binary
 
-### What’s inside the flake
-
-* [dev.nix](flake-parts/dev.nix)       – Nushell‑first dev env (nix develop).
-* [pkgs.nix](flake-parts/pkgs.nix)     – builds the fern-shell package & exports an overlay.
-* [modules/](flake-parts/modules/)     – Home‑Manager and NixOS modules; one option (programs.fern-shell.enable) is all users need.
-* [checks.nix](flake-parts/checks.nix) – CI jobs (qmllint, package build).
-* [fern/](fern/) – QML sources; live‑reload via qs -p fern/shell.qml.
-
 ## Quick start
 
 ### Option A: Home‑Manager
