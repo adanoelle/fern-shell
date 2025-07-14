@@ -9,7 +9,7 @@ PanelWindow {
 
     Text {
         anchors.centerIn: parent
-        text: "Fern bar – coming soon"
+        text: "Fern bar – Mhmmmm"
         color: "white"
         font.pixelSize: 14
     }
