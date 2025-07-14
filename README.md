@@ -3,24 +3,19 @@
 [![nix-flake](https://github.com/adanoelle/fern-shell/actions/workflows/ci.yml/badge.svg)](https://github.com/adanoelle/fern-shell/actions/workflows/ci.yml)
 
 
-    Fern is a QML‑powered desktop shell that runs on the Hyprland compositor, built for NixOS first.
-    It marries Qt Quick for fluid UI, Rust for safe background services, and Nix flakes for reproducible packaging.
-    Clone the repo, enable one Home‑Manager option, rebuild – you’re looking at a custom panel in under two minutes.
+> Fern is a QML‑powered desktop shell that runs on the Hyprland compositor, built for NixOS first.
+> It marries Qt Quick for fluid UI, Rust for safe background services, and Nix flakes for reproducible packaging.
+> Clone the repo, enable one Home‑Manager option, rebuild – you’re looking at a custom panel in under two minutes.
 
 ### Why we built Fern
-Motivation	Design choice
 
-Rapid iteration without recompiling C++	UI in pure QML with live‑reload
-
-NixOS Wiki
-
-Wayland‑native tiling & eye‑candy	Target Hyprland’s layer‑shell + effects
-
-Reproducible installs for contributors	Everything packaged via a flake; CI runs nix flake check
-
-Minimal runtime deps	Rust daemons + PipeWire/UPower bindings only when needed
-
-Modern CLI ergonomics	Nushell wrappers & fernctl Rust binary
+* Motivation	Design choice
+* Rapid iteration without recompiling C++	UI in pure QML with live‑reload
+* NixOS Wiki
+* Wayland‑native tiling & eye‑candy	Target Hyprland’s layer‑shell + effects
+* Reproducible installs for contributors	Everything packaged via a flake; CI runs nix flake check
+* Minimal runtime deps	Rust daemons + PipeWire/UPower bindings only when needed
+* Modern CLI ergonomics	Nushell wrappers & fernctl Rust binary
 
 ### What’s inside the flake
 
