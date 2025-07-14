@@ -1,4 +1,10 @@
 # flake‑parts/modules/home.nix
+# ─────────────────────────────
+# 
+# Home‑Manager integration for Fern QuickShell.
+# Symlinks QML, installs fonts, and exposes a single `programs.fern-shell`
+# option documented via mkOption below.
+# 
 # Provides:  flake.homeModules.fern-shell
 #
 #   Usage in a consumer flake:
