@@ -1,0 +1,17 @@
+name: nix-flake
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  flake-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v3   # quick Nix install :contentReference[oaicite:0]{index=0}
+      - name: nix flake check
+        run: nix flake check
+
