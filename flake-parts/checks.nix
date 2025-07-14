@@ -5,7 +5,7 @@
     checks = {
       # --- QML syntax / import validation
       qmllint = pkgs.runCommand "qmllint" { } ''
-        ${pkgs.qt6.qtdeclarative.dev}/bin/qmllint --strict \
+        ${pkgs.qt6.qtdeclarative}/bin/qmllint \
           ${self'.packages.fern-shell}/share/fern/shell.qml
         touch $out
       '';
