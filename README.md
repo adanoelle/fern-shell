@@ -9,13 +9,13 @@
 
 ### Why we built Fern
 
-* Motivation	Design choice
-* Rapid iteration without recompiling C++	UI in pure QML with live‑reload
-* NixOS Wiki
-* Wayland‑native tiling & eye‑candy	Target Hyprland’s layer‑shell + effects
-* Reproducible installs for contributors	Everything packaged via a flake; CI runs nix flake check
-* Minimal runtime deps	Rust daemons + PipeWire/UPower bindings only when needed
-* Modern CLI ergonomics	Nushell wrappers & fernctl Rust binary
+Motivation | Design Choice
+---        | ---
+Rapid iteration without recompiling C++ |	UI in pure QML with live‑reload
+Wayland‑native tiling | Target Hyprland’s layer‑shell + effects
+Reproducible installs for contributors | Everything packaged via a flake; CI runs nix flake check
+Minimal runtime deps | Rust daemons + PipeWire/UPower bindings only when needed
+Modern CLI ergonomics | Nushell wrappers & fernctl Rust binary
 
 ### What’s inside the flake
 
