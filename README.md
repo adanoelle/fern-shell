@@ -25,9 +25,9 @@ Modern CLI ergonomics | Nushell wrappers & fernctl Rust binary
 * flake-parts/checks.nix – CI jobs (qmllint, package build).
 * fern/ – QML sources; live‑reload via qs -p fern/shell.qml.
 
-### Quick start
+## Quick start
 
-# Option A: Home‑Manager
+### Option A: Home‑Manager
 ```nix
 {
   inputs.fern.url = "github:adanoelle/fern-shell";
@@ -36,7 +36,7 @@ Modern CLI ergonomics | Nushell wrappers & fernctl Rust binary
 }
 ```
 
-# Option B: NixOS system module
+### Option B: NixOS system module
 
 ```nix
 {
@@ -46,40 +46,3 @@ Modern CLI ergonomics | Nushell wrappers & fernctl Rust binary
 ```
 
 Rebuild, choose Hyprland + Fern at login, press Super+Return → Ghostty pops up.
-
-### Roadmap
-
-1. Ghostty launcher & keybind (v0.0.2)
-2. Full‑screen app launcher (v0.1.0)
-3. Workspace & status widgets (v0.2.0)
-4. Multi‑monitor, fernctl CLI, notification pop‑ups.
-References
-
-The guidance above draws from:
-
-    NixOS option declaration docs 
-    nlewo.github.io
-
-    nix.dev module tutorial 
-    Nix
-
-    flake‑parts official site & documentation generator 
-    flake.parts
-
-    mkdocs‑flake integration guide 
-    flake.parts
-
-    QuickShell live‑reload tutorial 
-    NixOS Wiki
-
-    Hyprland + layer‑shell availability discussions 
-    NixOS Discourse
-
-    Overlay placement advice from flake‑parts manual 
-    flake.parts
-
-    Practical flake explanations (“Flakes aren’t real…”) 
-    jade.fyi
-
-    High‑level flake intro for newcomers (“Explain to me like I’m 5”) 
-    Reddit
