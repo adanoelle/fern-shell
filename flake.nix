@@ -19,8 +19,7 @@
         ./flake-parts/checks.nix
         ./flake-parts/modules/home.nix
         ./flake-parts/modules/system.nix
-        # inputs.flake-parts.flakeModules.documentation
-        # inputs.mkdocs-flake.flakeModules.mkdocs
+        ./flake-parts/modules/fonts.nix
       ];
     };
 }
