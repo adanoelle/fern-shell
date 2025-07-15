@@ -11,46 +11,63 @@
 #     imports = [ inputs.fern.homeModules.fern-shell ];
 #     programs.fern-shell.enable  = true;
 #     programs.fern-shell.terminal = "alacritty";  # optional override
-# 
+#
 { self, inputs, lib, ... }:
 
 {
   flake.homeModules = {
-    fern-shell = { config, pkgs, ... }:
+    "fern-shell" = { config, pkgs, ... }:
       let
         inherit (lib) mkEnableOption mkOption types mkIf getAttr;
-        cfg      = config.programs.fern-shell;
+        cfg = config.programs.fern-shell;
 
-        # default to Ghostty; user can override with any pkgs attr‑name
-        terminalPkg = getAttr cfg.terminal pkgs;
-        qsPkg       = inputs.quickshell.packages.${pkgs.system}.default;
-        fernPkg     = self.packages.${pkgs.system}.fern-shell;
+        qsPkg   = inputs.quickshell.packages.${pkgs.system}.default;
+        fernPkg = self.packages.${pkgs.system}.fern-shell;
+        termPkg = getAttr cfg.terminal pkgs;
       in
       {
         options.programs.fern-shell = {
-          enable = mkEnableOption "Enable the Fern QuickShell environment";
-
+          enable   = mkEnableOption "Enable Fern QuickShell panel";
           terminal = mkOption {
-            type        = types.str;
-            default     = "ghostty";
+            type = types.str; default = "ghostty";
             description = "Terminal emulator launched by Fern.";
           };
         };
 
         config = mkIf cfg.enable {
           home.packages = [
-            fernPkg
-            qsPkg
-            terminalPkg               # ghostty by default
+            fernPkg qsPkg termPkg
             pkgs.material-symbols
             pkgs.nerdfonts.jetbrains-mono
           ];
 
-          # Symlink QML sources
           home.file.".config/quickshell/fern".source =
             "${fernPkg}/share/fern";
         };
       };
+
+    "fern-fonts" = { config, pkgs, ... }:
+      let
+        inherit (lib) mkEnableOption mkOption types mkIf literalExpression getAttr;
+        cfg = config.programs.fern-fonts;
+      in
+      {
+        options.programs.fern-fonts = {
+          enable = mkEnableOption "Install Fern’s recommended fonts";
+          extraFonts = mkOption {
+            type = types.listOf types.str; default = [ ];
+            description = "Extra font packages to install for this user.";
+            example = literalExpression ''[ "noto-fonts" ]'';
+          };
+        };
+
+        config = mkIf cfg.enable {
+          home.packages = with pkgs;
+            [ nerdfonts.jetbrains-mono material-symbols ]
+            ++ map (name: getAttr name pkgs) cfg.extraFonts;
+
+          fonts.fontconfig.enable = true;
+        };
+      };
   };
 }
-
