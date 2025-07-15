@@ -16,9 +16,10 @@
         environment.systemPackages = [ fernPkg qsPkg pkgs.ghostty ];
         programs.hyprland.enable   = true;
 
-        programs.hyprland.extraConfig = ''
-          exec-once = ${qsPkg}/bin/qs -c fern
-        '';
+        # Hyprland 0.40+ : use structured `settings`
+        programs.hyprland.settings."exec-once" = [
+          "${qsPkg}/bin/qs -c fern"
+        ];
       };
     };
 }
