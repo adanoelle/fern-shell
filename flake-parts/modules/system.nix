@@ -17,9 +17,9 @@
         programs.hyprland.enable   = true;
 
         # Hyprland 0.40+ : use structured `settings`
-        programs.hyprland.settings."exec-once" = [
-          "${qsPkg}/bin/qs -c fern"
-        ];
+        # programs.hyprland.settings."exec-once" = [
+        #   "${qsPkg}/bin/qs -c fern"
+        # ];
       };
     };
 }
