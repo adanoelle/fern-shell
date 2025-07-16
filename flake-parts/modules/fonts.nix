@@ -2,7 +2,6 @@
 # ────────────────────────────
 # This file now defines **only** the NixOS system module.
 # The Home‑Manager variant lives in modules/home.nix alongside fern‑shell.
-
 { self, lib, ... }:
 
 {
@@ -22,7 +21,7 @@
         };
       };
 
-      config = mkIf cfg.enable {
+      config = lib.mkIf cfg.enable {
         fonts = {
           enableDefaultPackages = true;
           packages = with pkgs;
