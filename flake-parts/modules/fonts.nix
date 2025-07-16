@@ -25,7 +25,7 @@
         fonts = {
           enableDefaultPackages = true;
           packages = with pkgs;
-            [ nerdfonts.jetbrains-mono material-symbols ]
+            [ nerd-fonts.jetbrains-mono material-symbols ]
             ++ map (name: getAttr name pkgs) cfg.extraFonts;
         };
       };
