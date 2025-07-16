@@ -14,14 +14,13 @@ PanelWindow {
         command: ["ghostty"]
     }
 
-
     RowLayout {
         anchors.verticalCenter: parent.verticalCenter
         anchors.horizontalCenter: parent.horizontalCenter
         spacing: 12
 
         Rectangle {
-            width: 28; height: 28; radius: 4
+            width: 32; height: 32; radius: 4
             color: hovered? "#404040" : "transparent"
 
             property bool hovered: false
