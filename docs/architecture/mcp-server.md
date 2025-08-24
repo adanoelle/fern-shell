@@ -20,7 +20,7 @@ tools to AI models. For Fern Shell, we'll implement an MCP server that:
 
 ```
 ┌────────────────────────┐     MCP Protocol    ┌─────────────────────┐
-│    Claude Code         │◄──────────────────►│   MCP Server        │
+│    Claude Code         │◄──────────────────► │   MCP Server        │
 │                        │                     │   (Rust Daemon)     │
 └────────────────────────┘                     └──────────┬──────────┘
                                                           │
@@ -28,10 +28,10 @@ tools to AI models. For Fern Shell, we'll implement an MCP server that:
                                                           ▼
 ┌────────────────────────────────────────────────────────────────────┐
 │                         Fern Shell (QML)                           │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │
-│  │ Notification │  │ Status       │  │ Command      │           │
-│  │ Display      │  │ Indicator    │  │ Palette      │           │
-│  └──────────────┘  └──────────────┘  └──────────────┘           │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
+│  │ Notification │  │ Status       │  │ Command      │              │
+│  │ Display      │  │ Indicator    │  │ Palette      │              │
+│  └──────────────┘  └──────────────┘  └──────────────┘              │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
