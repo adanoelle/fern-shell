@@ -473,3 +473,76 @@ QSG_VISUALIZE=overdraw qs -p fern/shell.qml
 - [QML Types Reference](https://doc.qt.io/qt-6/qmltypes.html)
 - [Material Symbols](https://fonts.google.com/icons)
 - [Hyprland IPC Protocol](https://wiki.hyprland.org/IPC/)
+
+## Caelestia Reference Patterns
+
+We have Soramanew's Caelestia shell cloned at `/home/ada/src/nix/caelestia/` as
+a reference implementation.
+
+### Module Implementation References
+
+When implementing Fern modules, reference these Caelestia examples:
+
+| Fern Module | Caelestia File                                                               | Key Patterns to Study                                   |
+| ----------- | ---------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Workspaces  | `/caelestia/modules/bar/components/workspaces/Workspaces.qml`                | Per-monitor support, scroll handling, occupied tracking |
+| Clock       | `/caelestia/modules/bar/components/Clock.qml`                                | Format switching, timer management                      |
+| System Tray | `/caelestia/modules/bar/components/Tray.qml`                                 | SystemTray API, item pooling                            |
+| Audio       | `/caelestia/services/Audio.qml` + `/caelestia/modules/bar/popouts/Audio.qml` | Service/UI separation                                   |
+| Network     | `/caelestia/services/Network.qml`                                            | NetworkManager D-Bus integration                        |
+| Battery     | `/caelestia/modules/bar/popouts/Battery.qml`                                 | UPower integration                                      |
+
+### Component Patterns to Adopt
+
+```qml
+// Caelestia's base component pattern
+// See: /caelestia/components/StyledRect.qml
+Rectangle {
+    color: "transparent"
+
+    Behavior on color {
+        ColorAnimation {
+            duration: Appearance.anim.durations.normal
+            easing.type: Easing.BezierSpline
+            easing.bezierCurve: Appearance.anim.curves.standard
+        }
+    }
+}
+```
+
+### Service Architecture
+
+```qml
+// Caelestia's service pattern
+// See: /caelestia/services/Hyprland.qml
+pragma Singleton
+import Quickshell.Hyprland
+
+Singleton {
+    // Wrap QuickShell APIs
+    // Add convenience methods
+    // Handle events centrally
+}
+```
+
+### Configuration System
+
+```qml
+// Caelestia's config approach
+// See: /caelestia/config/Config.qml
+FileView {
+    path: `${configPath}/shell.json`
+    watchChanges: true
+    onFileChanged: reload()
+}
+```
+
+### Performance Patterns from Caelestia
+
+1. **Lazy Loading:** `/caelestia/modules/bar/Bar.qml` lines 90-100
+2. **Component Pooling:** `/caelestia/modules/bar/popouts/Wrapper.qml`
+3. **Efficient Bindings:** Use of `Qt.binding()` for reactive updates
+4. **Async Components:** `asynchronous: true` on heavy Loaders
+
+See `/home/ada/src/nix/caelestia/modules/bar/CLAUDE.md` for deep dive into bar
+implementation.

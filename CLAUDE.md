@@ -223,3 +223,51 @@ flake-parts/
 - [Hyprland IPC](https://wiki.hyprland.org/IPC/)
 - [QML Reference](https://doc.qt.io/qt-6/qmlreference.html)
 - [Nix Flakes](https://nixos.wiki/wiki/Flakes)
+
+## Reference Implementation: Caelestia
+
+We have a local copy of Soramanew's Caelestia shell at
+`/home/ada/src/nix/caelestia/` for reference.
+
+### Key Files to Study
+
+| Feature          | Caelestia Location                              | Description                       |
+| ---------------- | ----------------------------------------------- | --------------------------------- |
+| Bar Architecture | `/caelestia/modules/bar/Bar.qml`                | Dynamic module loading system     |
+| Workspaces       | `/caelestia/modules/bar/components/workspaces/` | Complete workspace implementation |
+| Configuration    | `/caelestia/config/Config.qml`                  | Live-reloading JSON config        |
+| Services         | `/caelestia/services/`                          | System integration patterns       |
+| Components       | `/caelestia/components/`                        | Reusable styled components        |
+| System Tray      | `/caelestia/modules/bar/components/Tray.qml`    | SystemTray API usage              |
+
+### Learning Path from Caelestia
+
+1. **Start with components:** Study `StyledRect.qml` for base component patterns
+2. **Understand services:** Review `Hyprland.qml` for service singleton pattern
+3. **Learn bar structure:** Analyze `Bar.qml` for module architecture
+4. **Configuration system:** See `Config.qml` for live reload implementation
+
+### Patterns to Adopt from Caelestia
+
+```qml
+// Component pattern from Caelestia
+import qs.config  // Their config import
+import qs.components  // Their component library
+
+StyledClippingRect {  // Base component with theming
+    required property ShellScreen screen  // Explicit dependencies
+
+    // Consistent styling
+    color: Colours.palette.surface
+    radius: Appearance.rounding.normal
+}
+```
+
+### What to Reference When
+
+- **Building a new module?** Check `/caelestia/modules/bar/components/`
+- **Adding system integration?** Look at `/caelestia/services/`
+- **Implementing animations?** See `/caelestia/components/StyledRect.qml`
+- **Setting up config?** Study `/caelestia/config/`
+
+See `/home/ada/src/nix/caelestia/CLAUDE.md` for detailed analysis.
