@@ -1,5 +1,5 @@
-# pkgs.nix  ──  defines the fern‑shell derivation 
-# 
+# pkgs.nix  ──  defines the fern‑shell derivation
+#
 # exports an overlay in the canonical place:  flake.overlays.default
 #
 { self, lib, ... }:
@@ -10,10 +10,16 @@
       fernShell = pkgs.stdenv.mkDerivation {
         pname   = "fern-shell";
         version = "0.0.1";
-        src     = self;                       
+        src     = self;
+        nativeBuildInputs = [ pkgs.makeWrapper ];
         installPhase = ''
-          mkdir -p $out/share/fern
-          cp -r fern $out/share/
+          mkdir -p $out/share/fern $out/bin
+
+          # Copy QML files
+          cp -r fern/* $out/share/fern/
+
+          # Install helper scripts
+          install -Dm755 scripts/fern-config-watch $out/bin/fern-config-watch
         '';
       };
     in
