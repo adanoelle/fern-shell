@@ -1,0 +1,57 @@
+# Fern Shell Configuration
+# This file is converted to JSON by Nix at build time.
+# Edit this file, then run `nixos-rebuild switch` to apply changes.
+# For live development, edit ~/.config/fern/config.json directly.
+
+[appearance]
+# Theme: "dark" or "light"
+theme = "dark"
+
+# Accent color for highlights, focus states, active elements
+accent = "#89b4fa"
+
+# Font families
+font_family = "Inter"
+font_mono = "JetBrainsMono Nerd Font"
+font_icon = "Material Symbols Rounded"
+
+# Border radius scale (pixels)
+# Components reference these semantically: sm for buttons, md for modules, etc.
+[appearance.radius]
+none = 0
+sm = 4
+md = 8
+lg = 12
+full = 9999
+
+[bar]
+# Bar height in pixels
+height = 40
+
+# Position: "top" or "bottom"
+position = "top"
+
+# Margin from screen edge (pixels)
+margin = 0
+
+# Module layout (left to right)
+# Available: "workspaces", "clock", "tray", "spacer"
+modules_left = ["workspaces"]
+modules_center = ["clock"]
+modules_right = ["tray"]
+
+[modules.clock]
+# Time format (Qt format strings)
+# Common: "HH:mm" (24h), "hh:mm AP" (12h), "HH:mm:ss"
+format = "HH:mm"
+show_date = false
+date_format = "ddd, MMM d"
+
+[modules.workspaces]
+# Show empty workspaces
+show_empty = false
+# Number of workspaces
+count = 10
+
+[modules.tray]
+icon_size = 16
