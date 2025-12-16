@@ -6,7 +6,6 @@ result-*
 
 # Rust
 /target
-Cargo.lock
 
 # Qt Creator / VSCode / JetBrains
 .idea
