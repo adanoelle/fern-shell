@@ -164,6 +164,10 @@ pub mod ports;
 #[cfg_attr(docsrs, doc(cfg(feature = "cli")))]
 pub mod adapters;
 
+#[cfg(feature = "cli")]
+#[cfg_attr(docsrs, doc(cfg(feature = "cli")))]
+pub mod commands;
+
 /// Convenient re-exports for common usage patterns.
 ///
 /// Import this module to get started quickly:

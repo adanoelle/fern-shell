@@ -62,8 +62,10 @@ use thiserror::Error;
 ///     key_path: "appearance.accent".to_string(),
 /// };
 /// ```
+// TODO: Wire up ConfigLocation to ConfigError variants for rich source spans
+#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct ConfigLocation {
+pub(crate) struct ConfigLocation {
     /// Path to the configuration file.
     pub file: PathBuf,
     /// Line number (1-indexed), if known.
@@ -74,21 +76,10 @@ pub struct ConfigLocation {
     pub key_path: String,
 }
 
+#[allow(dead_code)]
 impl ConfigLocation {
     /// Creates a new config location.
-    ///
-    /// # Arguments
-    ///
-    /// * `file` — Path to the configuration file
-    /// * `key_path` — Dotted path to the key
-    ///
-    /// # Example
-    ///
-    /// ```rust,ignore
-    /// let loc = ConfigLocation::new("config.toml", "bar.height");
-    /// ```
-    #[must_use]
-    pub fn new(file: impl Into<PathBuf>, key_path: impl Into<String>) -> Self {
+    fn new(file: impl Into<PathBuf>, key_path: impl Into<String>) -> Self {
         Self {
             file: file.into(),
             line: None,
@@ -98,25 +89,19 @@ impl ConfigLocation {
     }
 
     /// Sets the line number.
-    #[must_use]
-    pub fn with_line(mut self, line: usize) -> Self {
+    fn with_line(mut self, line: usize) -> Self {
         self.line = Some(line);
         self
     }
 
     /// Sets the column number.
-    #[must_use]
-    pub fn with_column(mut self, column: usize) -> Self {
+    fn with_column(mut self, column: usize) -> Self {
         self.column = Some(column);
         self
     }
 
     /// Formats the location for display.
-    ///
-    /// Returns a string like `"config.toml:5:10"` or `"config.toml"` if
-    /// line/column are unknown.
-    #[must_use]
-    pub fn display(&self) -> String {
+    fn display(&self) -> String {
         match (self.line, self.column) {
             (Some(l), Some(c)) => format!("{}:{}:{}", self.file.display(), l, c),
             (Some(l), None) => format!("{}:{}", self.file.display(), l),
