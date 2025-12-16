@@ -394,6 +394,9 @@ impl std::fmt::Display for Notification {
 }
 
 /// Serde support for `SystemTime`.
+///
+/// The `pub` visibility is required for serde's `#[serde(with = "...")]` attribute.
+#[allow(unreachable_pub)]
 mod system_time_serde {
     use serde::{Deserialize, Deserializer, Serialize, Serializer};
     use std::time::{Duration, SystemTime, UNIX_EPOCH};
