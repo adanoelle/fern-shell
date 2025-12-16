@@ -31,9 +31,10 @@
         inherit (lib) mkEnableOption mkOption types mkIf getAttr recursiveUpdate;
         cfg = config.programs.fern-shell;
 
-        qsPkg   = inputs.quickshell.packages.${pkgs.system}.default;
-        fernPkg = self.packages.${pkgs.system}.fern-shell;
-        termPkg = getAttr cfg.terminal pkgs;
+        qsPkg      = inputs.quickshell.packages.${pkgs.system}.default;
+        fernPkg    = self.packages.${pkgs.system}.fern-shell;
+        fernctlPkg = self.packages.${pkgs.system}.fernctl;
+        termPkg    = getAttr cfg.terminal pkgs;
 
         # Default configuration (mirrors fern/config.toml)
         defaultConfig = {
@@ -125,6 +126,7 @@
         config = mkIf cfg.enable {
           home.packages = [
             fernPkg
+            fernctlPkg
             qsPkg
             termPkg
             pkgs.material-symbols
