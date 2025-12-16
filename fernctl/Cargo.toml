@@ -17,14 +17,14 @@ keywords = ["design-system", "design-tokens", "wayland", "shell", "configuration
 categories = ["config", "gui", "command-line-utilities"]
 
 [features]
-default = ["cli", "fancy-errors"]
+default = ["cli", "fancy-errors", "watch"]
 # Enable CLI binary
 cli = ["dep:clap"]
 # Enable fancy miette error output
 fancy-errors = ["miette/fancy"]
-# Enable file watching
-watch = ["dep:notify", "dep:notify-debouncer-mini"]
-# Enable D-Bus IPC
+# Enable file watching for live-reload workflow
+watch = ["cli", "dep:notify", "dep:notify-debouncer-mini"]
+# Enable D-Bus IPC for QuickShell communication
 dbus = ["dep:zbus"]
 
 [dependencies]
