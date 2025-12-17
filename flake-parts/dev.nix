@@ -19,11 +19,13 @@
           qt6.full        # designer, qmllint, etc.
           ghostty         # default terminal for live tests
           nushell
+          mdbook          # documentation generator
         ] ++ rustPkgs;
 
         shellHook = ''
           echo ---- Fern dev‑shell ready ----
           echo "Live preview:  qs -p fern/shell.qml"
+          echo "Build docs:    cd book && mdbook serve"
         '';
       };
     };

@@ -1,0 +1,23 @@
+[book]
+title = "Fern Shell Documentation"
+authors = ["Ada Noelle"]
+description = "A modern QML-based desktop shell for Hyprland"
+src = "src"
+language = "en"
+
+[build]
+build-dir = "../target/book"
+create-missing = false
+
+[output.html]
+default-theme = "coal"
+preferred-dark-theme = "coal"
+git-repository-url = "https://github.com/adanoelle/fern-shell"
+edit-url-template = "https://github.com/adanoelle/fern-shell/edit/main/book/{path}"
+
+[output.html.fold]
+enable = true
+level = 1
+
+[output.html.search]
+enable = true
