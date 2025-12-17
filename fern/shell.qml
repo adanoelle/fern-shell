@@ -1,109 +1,118 @@
-// fern/shell.qml – Main panel entry point
+// fern/shell.qml – Main shell entry point
+// Full-screen window with curved border and left bar
 import Quickshell
+import Quickshell.Wayland
 import QtQuick
-import QtQuick.Layouts
-import Quickshell.Io
 import "config" as Config
+import "bar"
 
-PanelWindow {
+ShellRoot {
     id: root
 
-    // Use Theme tokens for positioning and sizing
-    anchors {
-        top: Config.Theme.barPosition === "top"
-        bottom: Config.Theme.barPosition === "bottom"
-        left: true
-        right: true
-    }
-    implicitHeight: Config.Theme.barHeight
-    color: Config.Theme.barBackground
+    // Create shell for each screen
+    Variants {
+        model: Quickshell.screens
 
-    // Terminal launcher process
-    Process {
-        id: terminalProc
-        command: ["ghostty"]  // TODO: Make configurable via config.modules.terminal
-    }
+        // Container for both windows per screen
+        Scope {
+            id: screenScope
 
-    // Bar content layout
-    RowLayout {
-        anchors.fill: parent
-        anchors.leftMargin: Config.Theme.barPadding
-        anchors.rightMargin: Config.Theme.barPadding
-        spacing: Config.Theme.moduleSpacing
+            required property ShellScreen modelData
 
-        // Left modules
-        RowLayout {
-            Layout.alignment: Qt.AlignLeft
-            spacing: Config.Theme.spacing.sm
+            // Track bar width for exclusive zone
+            property int currentBarWidth: barWrapper.implicitWidth
 
-            // Placeholder for workspaces module
-            Text {
-                text: "Workspaces"
-                color: Config.Theme.foregroundDim
-                font.family: Config.Theme.fontFamily
-                font.pixelSize: Config.Theme.fontSize.sm
-            }
-        }
+            PanelWindow {
+                id: panelWindow
 
-        // Center spacer
-        Item { Layout.fillWidth: true }
+                screen: screenScope.modelData
 
-        // Center modules
-        RowLayout {
-            Layout.alignment: Qt.AlignCenter
-            spacing: Config.Theme.spacing.sm
+                // Full-screen anchoring for border effect
+                anchors {
+                    top: true
+                    bottom: true
+                    left: true
+                    right: true
+                }
 
-            // Simple clock placeholder
-            Text {
-                id: clockText
-                color: Config.Theme.foreground
-                font.family: Config.Theme.fontFamily
-                font.pixelSize: Config.Theme.fontSize.md
+                // Don't claim exclusive zone - let the exclusion window handle it
+                WlrLayershell.exclusionMode: ExclusionMode.Ignore
+                WlrLayershell.namespace: "fern-shell"
 
-                Timer {
-                    interval: 1000
-                    running: true
-                    repeat: true
-                    triggeredOnStart: true
-                    onTriggered: {
-                        const fmt = Config.Theme.moduleConfig("clock").format || "HH:mm";
-                        clockText.text = Qt.formatTime(new Date(), fmt);
+                // Transparent background - components provide visuals
+                color: "transparent"
+
+                // Input region - fixed at expanded bar width for stable hover
+                // This prevents the region from shrinking during collapse animation
+                Item {
+                    id: inputRegion
+
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.left: parent.left
+                    width: Config.Theme.barWidth  // Always 48px
+                }
+
+                // Mask input to the hover region - clicks elsewhere pass through
+                mask: Region { item: inputRegion }
+
+                // Layer for shadow effect
+                Item {
+                    anchors.fill: parent
+                    // Could add shadow effect here like Caelestia
+
+                    // Border: creates the curved frame around the screen
+                    Border {
+                        bar: barWrapper
+                    }
+
+                    // Backgrounds: fills the bar area
+                    Backgrounds {
+                        bar: barWrapper
+                    }
+                }
+
+                // Hover detection layer (covers full screen for edge detection)
+                BarInteractions {
+                    anchors.fill: parent
+                    bar: barWrapper
+
+                    // The bar wrapper with expand/collapse logic
+                    BarWrapper {
+                        id: barWrapper
+
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.left: parent.left
+
+                        screen: screenScope.modelData
                     }
                 }
             }
-        }
 
-        // Center spacer
-        Item { Layout.fillWidth: true }
+            // Separate window for exclusive zone management
+            PanelWindow {
+                id: exclusionWindow
 
-        // Right modules
-        RowLayout {
-            Layout.alignment: Qt.AlignRight
-            spacing: Config.Theme.spacing.sm
+                screen: screenScope.modelData
 
-            // Terminal launcher button
-            Rectangle {
-                width: Config.Theme.buttonPadding * 2 + Config.Theme.iconSize
-                height: width
-                radius: Config.Theme.buttonRadius
-                color: terminalButton.containsMouse
-                    ? Config.Theme.buttonBackgroundHover
-                    : Config.Theme.buttonBackground
-
-                MouseArea {
-                    id: terminalButton
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: terminalProc.running = true
+                // Only anchor left side for exclusive zone
+                anchors {
+                    left: true
+                    top: true
+                    bottom: true
                 }
 
-                Text {
-                    anchors.centerIn: parent
-                    text: ""  // Terminal icon (Nerd Font)
-                    font.family: Config.Theme.fontMono
-                    font.pixelSize: Config.Theme.iconSize
-                    color: Config.Theme.foreground
-                }
+                // Claim exclusive zone based on bar's current width
+                // This reserves screen space dynamically as bar expands/collapses
+                exclusiveZone: screenScope.currentBarWidth
+
+                WlrLayershell.namespace: "fern-exclusion"
+
+                // Invisible - just for reserving space
+                color: "transparent"
+                implicitWidth: 1
+                visible: true
             }
         }
     }
@@ -111,8 +120,13 @@ PanelWindow {
     // React to theme changes
     Connections {
         target: Config.Theme
+
         function onThemeChanged() {
-            console.log("Theme updated, bar will repaint");
+            console.log("Fern: Theme updated");
         }
+    }
+
+    Component.onCompleted: {
+        console.log("Fern Shell started - curved border design");
     }
 }

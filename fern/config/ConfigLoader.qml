@@ -23,8 +23,7 @@ Singleton {
     property bool loaded: false
     property string error: ""
 
-    // Signal when config changes
-    signal configChanged()
+    // Note: configChanged() signal is auto-generated from the config property
 
     // File watcher for live reload
     FileView {
@@ -33,14 +32,10 @@ Singleton {
         watchChanges: true
 
         onTextChanged: {
-            if (text) {
+            if (text && text.length > 0) {
                 root.parseConfig(text);
-            }
-        }
-
-        onErrorChanged: {
-            if (error) {
-                console.warn("ConfigLoader: Cannot read config file:", error);
+            } else if (root.loaded === false) {
+                // File doesn't exist or is empty, load defaults
                 root.loadDefaultConfig();
             }
         }
@@ -54,7 +49,6 @@ Singleton {
             loaded = true;
             error = "";
             console.log("ConfigLoader: Configuration loaded successfully");
-            configChanged();
             Theme.applyConfig(config);
         } catch (e) {
             error = "Failed to parse config: " + e.message;
@@ -68,7 +62,6 @@ Singleton {
         console.log("ConfigLoader: Loading default configuration");
         config = getDefaultConfig();
         loaded = true;
-        configChanged();
         Theme.applyConfig(config);
     }
 

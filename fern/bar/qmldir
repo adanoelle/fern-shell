@@ -1,0 +1,6 @@
+module fern.bar
+Bar 1.0 Bar.qml
+BarWrapper 1.0 BarWrapper.qml
+BarInteractions 1.0 BarInteractions.qml
+Border 1.0 Border.qml
+Backgrounds 1.0 Backgrounds.qml

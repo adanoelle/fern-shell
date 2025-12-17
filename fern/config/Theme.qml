@@ -135,11 +135,20 @@ QtObject {
 
     // -- Bar --
     readonly property int barHeight: config.bar?.height ?? 40
-    readonly property string barPosition: config.bar?.position ?? "top"
+    readonly property string barPosition: config.bar?.position ?? "left"
     readonly property int barMargin: config.bar?.margin ?? 0
     readonly property color barBackground: background
     readonly property int barPadding: spacing.sm
     readonly property int barRadius: radius.none
+
+    // -- Bar (Vertical/Left) --
+    readonly property int barWidth: config.bar?.width ?? 48
+    readonly property int barCollapsedWidth: config.bar?.collapsed_width ?? 4
+    readonly property bool barPersistent: config.bar?.persistent ?? false
+
+    // -- Border (Screen frame with curved corners) --
+    readonly property int borderThickness: config.border?.thickness ?? 4
+    readonly property int borderRounding: config.border?.rounding ?? 24
 
     // -- Module (generic container) --
     readonly property int moduleRadius: radius.md

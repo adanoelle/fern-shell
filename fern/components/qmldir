@@ -1,0 +1,3 @@
+module fern.components
+StyledRect 1.0 StyledRect.qml
+ModuleContainer 1.0 ModuleContainer.qml
