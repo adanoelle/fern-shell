@@ -59,6 +59,7 @@
 
 pub mod theme;
 pub mod tokens;
+pub mod user_config;
 
 // Future modules
 // pub mod components;

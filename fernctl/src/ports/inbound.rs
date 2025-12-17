@@ -204,17 +204,21 @@ impl RawConfig {
     /// let theme = validated.into_theme();
     /// ```
     pub fn validate(self) -> Result<ValidatedConfig> {
-        // Deserialize into Theme structure, collecting any validation errors
-        let theme: Theme = serde_json::from_value(self.inner.clone()).map_err(|e| {
-            FernError::Config(ConfigError::MissingField {
-                key: "theme".to_string(),
-                expected_type: format!("valid theme structure: {e}"),
-            })
-        })?;
+        // Deserialize into UserConfig (matches TOML structure)
+        let user_config: crate::domain::user_config::UserConfig =
+            serde_json::from_value(self.inner.clone()).map_err(|e| {
+                FernError::Config(ConfigError::MissingField {
+                    key: "config".to_string(),
+                    expected_type: format!("valid configuration structure: {e}"),
+                })
+            })?;
+
+        // Transform UserConfig to Theme, applying overrides
+        let theme = user_config.into_theme()?;
 
         Ok(ValidatedConfig {
             theme,
-            warnings: Vec::new(), // TODO: Collect warnings during validation
+            warnings: Vec::new(), // Future: collect warnings about unknown keys
         })
     }
 
