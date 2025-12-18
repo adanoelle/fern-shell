@@ -1,8 +1,8 @@
-//! # fernctl CLI
+//! # fern-theme CLI
 //!
-//! Command-line interface for Fern Shell configuration management.
+//! Command-line interface for Fern Shell theme and configuration management.
 //!
-//! `fernctl` is the primary tool for working with Fern Shell configuration files.
+//! `fern-theme` is the primary tool for working with Fern Shell configuration files.
 //! It provides commands for validation, format conversion, theme queries, and
 //! live-reload file watching.
 //!
@@ -20,24 +20,24 @@
 //!
 //! ```bash
 //! # Validate configuration
-//! fernctl validate
+//! fern-theme validate
 //!
 //! # Convert TOML to JSON
-//! fernctl convert config.toml -o config.json
+//! fern-theme convert config.toml -o config.json
 //!
 //! # Query theme values
-//! fernctl query colors.background
+//! fern-theme query colors.background
 //!
 //! # Watch for changes and auto-convert
-//! fernctl watch
+//! fern-theme watch
 //!
 //! # Show default dark theme
-//! fernctl defaults dark
+//! fern-theme defaults dark
 //! ```
 //!
 //! ## Configuration File Locations
 //!
-//! By default, `fernctl` looks for configuration at:
+//! By default, `fern-theme` looks for configuration at:
 //!
 //! - **Linux**: `~/.config/fern/config.toml`
 //! - **macOS**: `~/Library/Application Support/fern/config.toml`
@@ -63,8 +63,8 @@
 //! | `RUST_LOG` | Set log level (e.g., `debug`, `trace`) |
 
 use clap::{Parser, Subcommand};
-use fernctl::adapters::{FileSystemAdapter, TomlConfigAdapter};
-use fernctl::error::Result;
+use fern_theme::adapters::{FileSystemAdapter, TomlConfigAdapter};
+use fern_theme::error::Result;
 use std::path::PathBuf;
 
 mod commands_impl {
@@ -73,21 +73,21 @@ mod commands_impl {
     //! We re-export from the library when available, but keep local
     //! implementations for commands that don't need library exposure.
 
-    pub use fernctl::commands::convert;
-    pub use fernctl::commands::query;
-    pub use fernctl::commands::validate;
+    pub use fern_theme::commands::convert;
+    pub use fern_theme::commands::query;
+    pub use fern_theme::commands::validate;
 
     #[cfg(feature = "watch")]
-    pub use fernctl::commands::watch;
+    pub use fern_theme::commands::watch;
 }
 
-/// fernctl - Fern Shell Configuration Manager
+/// fern-theme - Fern Shell Theme Manager
 ///
-/// A command-line tool for managing Fern Shell configuration files.
+/// A command-line tool for managing Fern Shell theme and configuration files.
 /// Validates TOML configuration, converts to JSON for QuickShell,
 /// and provides theme query capabilities.
 #[derive(Parser, Debug)]
-#[command(name = "fernctl")]
+#[command(name = "fern-theme")]
 #[command(author, version, about, long_about = None)]
 #[command(propagate_version = true)]
 #[command(after_help = "For more information, see: https://github.com/adanoelle/fern-shell")]
@@ -294,7 +294,7 @@ fn cmd_query(config_path: &PathBuf, query_path: &str, verbose: bool) -> Result<(
 
 /// Shows default theme values.
 fn cmd_defaults(variant: &str) -> Result<()> {
-    use fernctl::domain::theme::Theme;
+    use fern_theme::domain::theme::Theme;
 
     let theme = match variant.to_lowercase().as_str() {
         "dark" => Theme::dark(),
@@ -306,7 +306,7 @@ fn cmd_defaults(variant: &str) -> Result<()> {
     };
 
     let json = serde_json::to_string_pretty(&theme).map_err(|e| {
-        fernctl::error::FernError::io(
+        fern_theme::error::FernError::io(
             "serializing theme",
             std::io::Error::other(e.to_string()),
         )

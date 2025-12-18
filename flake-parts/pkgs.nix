@@ -1,10 +1,11 @@
-# pkgs.nix  ──  defines the fern‑shell and fernctl derivations
+# pkgs.nix  ──  defines the fern‑shell and fern-theme derivations
 #
 # exports an overlay in the canonical place:  flake.overlays.default
 #
 # Packages:
 #   - fern-shell: QML files for the QuickShell panel
-#   - fernctl: Rust CLI for config management (validate, convert, query, watch)
+#   - fern-theme: Rust CLI for theme/config management (validate, convert, query, watch)
+#   - fern-core: Shared library (built as part of fern-theme)
 #
 { self, lib, ... }:
 
@@ -22,36 +23,45 @@
         '';
       };
 
-      # Rust CLI for configuration management
-      fernctl = pkgs.rustPlatform.buildRustPackage {
-        pname = "fernctl";
+      # Rust CLI for theme/configuration management
+      # Built from the Cargo workspace
+      fernTheme = pkgs.rustPlatform.buildRustPackage {
+        pname = "fern-theme";
         version = "0.1.0";
-        src = "${self}/fernctl";
-        cargoLock.lockFile = "${self}/fernctl/Cargo.lock";
+        src = self;
+        cargoLock.lockFile = "${self}/Cargo.lock";
+
+        # Build only the fern-theme package from the workspace
+        buildAndTestSubdir = "crates/fern-theme";
 
         # Build with all default features (cli, fancy-errors, watch)
         buildFeatures = [ "cli" "fancy-errors" "watch" ];
 
         meta = with lib; {
-          description = "Configuration manager for Fern Shell";
+          description = "Theme and configuration manager for Fern Shell";
           homepage = "https://github.com/adanoelle/fern-shell";
           license = licenses.mit;
           maintainers = [ ];
-          mainProgram = "fernctl";
+          mainProgram = "fern-theme";
         };
       };
+
+      # Alias for backwards compatibility during transition
+      fernctl = fernTheme;
     in
     {
       packages = {
-        inherit fernShell fernctl;
+        inherit fernShell fernTheme fernctl;
         fern-shell = fernShell;
+        fern-theme = fernTheme;
         default = fernShell;
       };
     };
 
   flake.overlays.default = final: prev: {
     fern-shell = self.packages.${final.stdenv.hostPlatform.system}.fern-shell;
-    fernctl = self.packages.${final.stdenv.hostPlatform.system}.fernctl;
+    fern-theme = self.packages.${final.stdenv.hostPlatform.system}.fern-theme;
+    # Backwards compatibility alias
+    fernctl = self.packages.${final.stdenv.hostPlatform.system}.fern-theme;
   };
 }
-

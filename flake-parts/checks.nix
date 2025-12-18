@@ -10,8 +10,9 @@
         touch $out
       '';
 
-      # --- Builds the package (catches missing deps early)
+      # --- Builds the packages (catches missing deps early)
       build = self'.packages.fern-shell;
+      build-fern-theme = self'.packages.fern-theme;
     };
   };
 }

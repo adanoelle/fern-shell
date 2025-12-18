@@ -63,12 +63,30 @@ prioritizes developer experience and rapid iteration.
 - **Structure**: flake-parts for modular organization
 - **Modules**: Both Home-Manager and NixOS modules provided
 
-### 4. Rust for System Services (Planned)
+### 4. Rust Crate Workspace
 
 - **Rationale**: Memory safety, performance, good async story for system
   monitoring
-- **Integration**: IPC with QML frontend via D-Bus or custom protocol
-- **Examples**: fernctl CLI, audio daemon, power monitoring
+- **Architecture**: Cargo workspace with specialized crates
+- **Integration**: IPC with QML frontend via D-Bus or state files
+
+#### Crate Structure
+
+```
+crates/
+├── fern-core/       # Shared types, traits, utilities (paths, state, config)
+├── fern-theme/      # Theme & config management CLI (formerly fernctl)
+├── fern-obs/        # OBS WebSocket bridge (planned)
+├── fernctl/         # Control plane & orchestrator (planned)
+└── fernctl-tui/     # TUI dashboard (planned)
+```
+
+#### Key Crates
+
+- **fern-core**: Common infrastructure (XDG paths, service state types, error handling)
+- **fern-theme**: Type-safe design tokens, TOML→JSON conversion, validation
+- **fern-obs**: OBS Studio integration via WebSocket (future)
+- **fernctl**: Unified control plane for service orchestration (future)
 
 ## Development Workflow
 
@@ -127,7 +145,8 @@ nix flake check
 
 - [ ] **Animations** - Smooth transitions
 - [ ] **Themes** - Color scheme support
-- [ ] **fernctl** - CLI management tool
+- [x] **fern-theme** - Theme/config CLI (formerly fernctl)
+- [ ] **fernctl** - Unified control plane (planned)
 - [ ] **Documentation** - User guide
 
 ## Module Development Pattern
@@ -182,19 +201,44 @@ Rectangle {
 ### File Organization
 
 ```
-fern/
-├── shell.qml           # Main panel entry point
-├── modules/           # Individual panel modules
-│   ├── Clock.qml
-│   ├── Workspaces.qml
-│   └── ...
-└── themes/           # Color schemes (future)
-
-flake-parts/
-├── dev.nix          # Development shell
-├── pkgs.nix         # Package definitions
-├── checks.nix       # CI checks
-└── modules/         # Nix modules
+fern-shell/
+├── Cargo.toml          # Workspace root
+├── Cargo.lock          # Workspace lockfile
+├── flake.nix           # Nix flake entry point
+│
+├── crates/
+│   ├── fern-core/      # Shared library
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── paths.rs    # XDG paths
+│   │       ├── state.rs    # Service state types
+│   │       ├── config.rs   # Config utilities
+│   │       └── error.rs    # Shared errors
+│   │
+│   └── fern-theme/     # Theme CLI (formerly fernctl)
+│       └── src/
+│           ├── main.rs
+│           ├── lib.rs
+│           ├── domain/     # Design tokens, themes
+│           ├── ports/      # Hexagonal architecture
+│           ├── adapters/   # File I/O, TOML parsing
+│           └── commands/   # CLI commands
+│
+├── fern/
+│   ├── shell.qml       # Main panel entry point
+│   ├── modules/        # Individual panel modules
+│   │   ├── Clock.qml
+│   │   ├── Workspaces.qml
+│   │   └── ...
+│   ├── services/       # QML service singletons
+│   ├── components/     # Reusable QML components
+│   └── config/         # Configuration loading
+│
+└── flake-parts/
+    ├── dev.nix         # Development shell
+    ├── pkgs.nix        # Package definitions
+    ├── checks.nix      # CI checks
+    └── modules/        # Nix modules
 ```
 
 ## Common Pitfalls & Solutions

@@ -1,0 +1,74 @@
+[package]
+name = "fern-theme"
+description = """
+Theme and configuration management for Fern Shell.
+
+fern-theme provides a type-safe design token system with compile-time guarantees
+for design system correctness. It handles TOML configuration parsing, JSON output
+for QuickShell, and live-reload workflows.
+"""
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+keywords = ["design-system", "design-tokens", "wayland", "shell", "configuration"]
+categories = ["config", "gui", "command-line-utilities"]
+
+[features]
+default = ["cli", "fancy-errors", "watch"]
+# Enable CLI binary
+cli = ["dep:clap"]
+# Enable fancy miette error output
+fancy-errors = ["miette/fancy"]
+# Enable file watching for live-reload workflow
+watch = ["cli", "dep:notify", "dep:notify-debouncer-mini"]
+# Enable D-Bus IPC for QuickShell communication
+dbus = ["dep:zbus"]
+
+[dependencies]
+# Internal crates
+fern-core = { workspace = true }
+
+# === Error Handling ===
+thiserror = { workspace = true }
+miette = { workspace = true }
+
+# === Serialization ===
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+
+# === CLI (optional) ===
+clap = { workspace = true, optional = true }
+
+# === File Watching (optional) ===
+notify = { workspace = true, optional = true }
+notify-debouncer-mini = { workspace = true, optional = true }
+
+# === IPC (optional) ===
+zbus = { workspace = true, optional = true }
+
+# === Utilities ===
+strsim = { workspace = true }
+dirs = { workspace = true }
+once_cell = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+insta = { workspace = true }
+tokio = { workspace = true }
+tempfile = { workspace = true }
+
+[[bin]]
+name = "fern-theme"
+path = "src/main.rs"
+required-features = ["cli"]
+
+[lints]
+workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

@@ -1,0 +1,95 @@
+# Fern Shell - Cargo Workspace
+#
+# A modern, modular desktop shell for Hyprland built with QML and Rust.
+#
+# ## Crate Overview
+#
+# - `fern-core`  - Shared types, traits, and utilities
+# - `fern-theme` - Theme and configuration management (formerly fernctl)
+# - `fern-obs`   - OBS WebSocket bridge (planned)
+# - `fernctl`    - Control plane and orchestrator (planned)
+
+[workspace]
+resolver = "2"
+members = [
+    "crates/fern-core",
+    "crates/fern-theme",
+    # Future crates:
+    # "crates/fern-obs",
+    # "crates/fernctl",
+    # "crates/fernctl-tui",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "MIT"
+repository = "https://github.com/adanoelle/fern-shell"
+authors = ["Fern Shell Contributors"]
+
+[workspace.dependencies]
+# Internal crates
+fern-core = { path = "crates/fern-core" }
+
+# === Error Handling ===
+thiserror = "2.0"
+miette = { version = "7.2", default-features = false, features = ["derive"] }
+
+# === Serialization ===
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+# === CLI ===
+clap = { version = "4.5", features = ["derive", "env", "wrap_help"] }
+
+# === File Watching ===
+notify = "6.1"
+notify-debouncer-mini = "0.4"
+
+# === Async Runtime ===
+tokio = { version = "1.37", features = ["rt-multi-thread", "macros", "fs", "sync"] }
+async-trait = "0.1"
+
+# === IPC ===
+zbus = "4.4"
+
+# === Utilities ===
+dirs = "5.0"
+strsim = "0.11"
+once_cell = "1.19"
+
+# === TUI (future) ===
+ratatui = "0.29"
+crossterm = "0.28"
+
+# === OBS (future) ===
+obws = "0.14"
+
+# === Testing ===
+proptest = "1.4"
+insta = { version = "1.38", features = ["json"] }
+tempfile = "3.10"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+must_use_candidate = "allow"
+nursery = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+debug = 1

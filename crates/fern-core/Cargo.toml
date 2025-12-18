@@ -1,0 +1,52 @@
+[package]
+name = "fern-core"
+description = """
+Shared types, traits, and utilities for the Fern Shell ecosystem.
+
+fern-core provides common infrastructure used across all fern-* crates,
+including configuration paths, service state management, IPC patterns,
+and shared error types.
+"""
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors = ["Fern Shell Contributors"]
+keywords = ["fern-shell", "wayland", "desktop-shell"]
+categories = ["config", "gui"]
+
+[features]
+default = []
+# Enable async runtime support for service daemons
+async = ["dep:tokio"]
+# Enable D-Bus IPC support
+dbus = ["dep:zbus"]
+
+[dependencies]
+# === Serialization ===
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# === Error Handling ===
+thiserror = { workspace = true }
+
+# === Utilities ===
+dirs = { workspace = true }
+
+# === Optional: Async Runtime ===
+tokio = { workspace = true, optional = true }
+
+# === Optional: D-Bus ===
+zbus = { workspace = true, optional = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+module_name_repetitions = "allow"
+must_use_candidate = "allow"

@@ -1,6 +1,6 @@
-//! # fernctl — Type-Safe Design Tokens for Fern Shell
+//! # fern-theme — Type-Safe Design Tokens for Fern Shell
 //!
-//! `fernctl` is the core library for Fern Shell's design system, providing
+//! `fern-theme` is the core library for Fern Shell's design system, providing
 //! compile-time guarantees for design token correctness through Rust's type system.
 //!
 //! ## Overview
@@ -30,7 +30,7 @@
 //!
 //! These questions are answered at runtime (if at all), leading to subtle bugs.
 //!
-//! `fernctl` encodes design system rules in the type system:
+//! `fern-theme` encodes design system rules in the type system:
 //!
 //! ```rust,ignore
 //! // ColorToken<Surface> can only be used where BackgroundRole is expected
@@ -91,8 +91,8 @@
 //! ### Loading Configuration
 //!
 //! ```rust,ignore
-//! use fernctl::prelude::*;
-//! use fernctl::adapters::TomlConfigAdapter;
+//! use fern_theme::prelude::*;
+//! use fern_theme::adapters::TomlConfigAdapter;
 //!
 //! // Load and validate a TOML configuration
 //! let toml_content = std::fs::read_to_string("config.toml")?;
@@ -107,7 +107,7 @@
 //! ### Using Design Tokens
 //!
 //! ```rust,ignore
-//! use fernctl::domain::tokens::*;
+//! use fern_theme::domain::tokens::*;
 //!
 //! // Create type-safe colors
 //! let surface: ColorToken<Surface> = ColorToken::from_hex("#313244")?;
@@ -123,7 +123,7 @@
 //!
 //! | Feature | Default | Description |
 //! |---------|---------|-------------|
-//! | `cli` | ✓ | Enables the `fernctl` binary with clap |
+//! | `cli` | ✓ | Enables the `fern-theme` binary with clap |
 //! | `fancy-errors` | ✓ | Enables colorful miette error output |
 //! | `watch` | ✗ | Enables file watching for live reload |
 //! | `dbus` | ✗ | Enables D-Bus IPC with QuickShell |
@@ -146,7 +146,7 @@
 //!
 //! For detailed rationale, see the module-level documentation in each submodule.
 
-#![doc(html_root_url = "https://docs.rs/fernctl/0.1.0")]
+#![doc(html_root_url = "https://docs.rs/fern-theme/0.1.0")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![warn(
@@ -173,7 +173,7 @@ pub mod commands;
 /// Import this module to get started quickly:
 ///
 /// ```rust,ignore
-/// use fernctl::prelude::*;
+/// use fern_theme::prelude::*;
 /// ```
 pub mod prelude {
     // Domain types
