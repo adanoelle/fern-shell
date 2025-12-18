@@ -24,6 +24,7 @@ QtObject {
         base: "#1e1e2e",
         surface: "#313244",
         surfaceHover: "#45475a",
+        surfaceActive: "#585b70",
         overlay: "#6c7086",
         text: "#cdd6f4",
         textDim: "#a6adc8",
@@ -39,6 +40,7 @@ QtObject {
         base: "#eff1f5",
         surface: "#e6e9ef",
         surfaceHover: "#dce0e8",
+        surfaceActive: "#ccd0da",
         overlay: "#9ca0b0",
         text: "#4c4f69",
         textDim: "#6c6f85",
@@ -68,6 +70,7 @@ QtObject {
     readonly property color background: _palette.base
     readonly property color surface: _palette.surface
     readonly property color surfaceHover: _palette.surfaceHover
+    readonly property color surfaceActive: _palette.surfaceActive
     readonly property color overlay: _palette.overlay
     readonly property color foreground: _palette.text
     readonly property color foregroundDim: _palette.textDim
@@ -118,15 +121,26 @@ QtObject {
     // -- Animation (not configurable) --
     readonly property var duration: ({
         instant: 0,
-        fast: 100,
-        normal: 200,
-        slow: 300
+        fast: 150,
+        normal: 300,
+        slow: 400,
+        popout: 350  // Organic popout animation
     })
 
     readonly property var easing: ({
         standard: Easing.OutCubic,
         enter: Easing.OutCubic,
         exit: Easing.InCubic
+    })
+
+    // Material Design 3 bezier curves for organic animations
+    readonly property var curves: ({
+        // Standard transitions
+        standard: [0.2, 0, 0, 1],
+        // Emphasized entry (snappy, organic)
+        emphasized: [0.05, 0.7, 0.1, 1],
+        // Expressive spatial (slight overshoot for "bloom" effect)
+        expressive: [0.38, 1.21, 0.22, 1]
     })
 
     // === TIER 3: COMPONENT TOKENS (Internal) ===
@@ -143,12 +157,14 @@ QtObject {
 
     // -- Bar (Vertical/Left) --
     readonly property int barWidth: config.bar?.width ?? 48
-    readonly property int barCollapsedWidth: config.bar?.collapsed_width ?? 4
-    readonly property bool barPersistent: config.bar?.persistent ?? false
 
     // -- Border (Screen frame with curved corners) --
     readonly property int borderThickness: config.border?.thickness ?? 4
-    readonly property int borderRounding: config.border?.rounding ?? 24
+    readonly property int borderRounding: config.border?.rounding ?? 6
+
+    // -- Gaps (Hyprland window gaps, controlled by Fern) --
+    readonly property int gapsIn: config.gaps?.inner ?? 5
+    readonly property int gapsOut: config.gaps?.outer ?? 5
 
     // -- Module (generic container) --
     readonly property int moduleRadius: radius.md
