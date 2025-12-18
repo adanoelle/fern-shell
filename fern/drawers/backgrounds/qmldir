@@ -1,0 +1,5 @@
+module fern.drawers.backgrounds
+LeftBackground 1.0 LeftBackground.qml
+RightBackground 1.0 RightBackground.qml
+TopBackground 1.0 TopBackground.qml
+BottomBackground 1.0 BottomBackground.qml
