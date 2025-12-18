@@ -30,7 +30,7 @@ StyledRect {
             id: moduleRepeater
 
             // Default module list, can be overridden by config
-            model: Config.Theme.config.bar?.modules ?? ["workspaces", "spacer", "clock"]
+            model: Config.Theme.config.bar?.modules ?? ["workspaces", "spacer", "clock", "power"]
 
             Loader {
                 id: moduleLoader
@@ -54,6 +54,10 @@ StyledRect {
                             return workspacesComponent;
                         case "clock":
                             return clockComponent;
+                        case "power":
+                            return powerComponent;
+                        case "tray":
+                            return trayComponent;
                         case "spacer":
                             return spacerComponent;
                         default:
@@ -79,6 +83,18 @@ StyledRect {
         id: clockComponent
 
         Clock {}
+    }
+
+    Component {
+        id: powerComponent
+
+        Power {}
+    }
+
+    Component {
+        id: trayComponent
+
+        Tray {}
     }
 
     Component {
