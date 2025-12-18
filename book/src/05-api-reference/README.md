@@ -2,59 +2,83 @@
 
 Complete API documentation for Fern Shell.
 
-## Rust API (fernctl)
+## Rust Crates
 
-The fernctl crate provides the Rust backend for configuration management and
-system integration.
+Fern Shell uses a Cargo workspace with specialized crates:
 
-### Quick Links
+| Crate        | Description                              |
+| ------------ | ---------------------------------------- |
+| `fern-core`  | Shared types, paths, utilities           |
+| `fern-theme` | Theme & config management CLI            |
+| `fern-obs`   | OBS WebSocket bridge daemon              |
 
-- **[Full API Reference](../api/fernctl/index.html)** - Complete rustdoc
+## fern-theme API
+
+Theme and configuration management (formerly fernctl).
 
 ### Key Modules
 
-| Module                                         | Description                                  |
-| ---------------------------------------------- | -------------------------------------------- |
-| [domain](../api/fernctl/domain/index.html)     | Pure business logic - themes, tokens, config |
-| [ports](../api/fernctl/ports/index.html)       | Hexagonal architecture interfaces            |
-| [adapters](../api/fernctl/adapters/index.html) | Concrete implementations                     |
-| [commands](../api/fernctl/commands/index.html) | CLI command handlers                         |
-| [error](../api/fernctl/error/index.html)       | Error types with diagnostics                 |
+| Module    | Description                                  |
+| --------- | -------------------------------------------- |
+| `domain`  | Pure business logic - themes, tokens, config |
+| `ports`   | Hexagonal architecture interfaces            |
+| `adapters`| Concrete implementations                     |
+| `commands`| CLI command handlers                         |
+| `error`   | Error types with diagnostics                 |
 
 ### Domain Types
 
 ```rust
 // Theme composition
-use fernctl::domain::Theme;
+use fern_theme::domain::Theme;
 
 // Design tokens
-use fernctl::domain::tokens::{ColorToken, SpacingToken, RadiusToken};
+use fern_theme::domain::tokens::{ColorToken, SpacingToken, RadiusToken};
 
 // User configuration
-use fernctl::domain::UserConfig;
+use fern_theme::domain::UserConfig;
 ```
 
 ### Port Traits
 
 ```rust
 // Inbound (what the domain accepts)
-use fernctl::ports::inbound::{ConfigPort, QueryPort, ValidatePort};
+use fern_theme::ports::inbound::{ConfigPort, QueryPort, ValidatePort};
 
 // Outbound (what the domain needs)
-use fernctl::ports::outbound::{PersistPort, NotifyPort, IpcPort};
+use fern_theme::ports::outbound::{PersistPort, NotifyPort, IpcPort};
 ```
 
 ### Adapter Implementations
 
 ```rust
 // TOML configuration
-use fernctl::adapters::TomlConfigAdapter;
-
-// JSON serialization
-use fernctl::adapters::JsonThemeAdapter;
+use fern_theme::adapters::TomlConfigAdapter;
 
 // File system
-use fernctl::adapters::FileSystemPersist;
+use fern_theme::adapters::FileSystemAdapter;
+```
+
+## fern-obs API
+
+OBS WebSocket bridge. See [fern-obs CLI](fern-obs.md) for command reference.
+
+### Key Types
+
+```rust
+use fern_obs::state::{ObsState, RecordingState, StreamingState, ObsStats};
+use fern_obs::client::ObsClient;
+use fern_obs::daemon::Daemon;
+use fern_obs::config::ObsConfig;
+```
+
+## fern-core API
+
+Shared infrastructure.
+
+```rust
+use fern_core::paths::FernPaths;
+use fern_core::state::{ServiceInfo, ServiceStatus};
 ```
 
 ## QML API
@@ -65,10 +89,11 @@ documentation.
 
 ### Key Singletons
 
-| Singleton  | Import                      | Purpose       |
-| ---------- | --------------------------- | ------------- |
-| `Theme`    | `"../config" as Config`     | Design tokens |
-| `Hyprland` | `"../services" as Services` | Hyprland IPC  |
+| Singleton  | Import                      | Purpose             |
+| ---------- | --------------------------- | ------------------- |
+| `Theme`    | `"../config" as Config`     | Design tokens       |
+| `Hyprland` | `"../services" as Services` | Hyprland IPC        |
+| `Obs`      | `"../services" as Services` | OBS control         |
 
 ### Common Patterns
 
@@ -81,19 +106,46 @@ Config.Theme.spacing.md
 // Access Hyprland state
 Services.Hyprland.activeWsId
 Services.Hyprland.workspaces
+
+// Access OBS state and control
+Services.Obs.isRecording
+Services.Obs.recordingTimecode
+Services.Obs.toggleRecording()
 ```
 
 ## CLI Reference
 
+### fern-theme
+
+Theme and configuration management.
+
 ```bash
-fernctl --help
+fern-theme --help
 ```
 
 | Command    | Description                  |
 | ---------- | ---------------------------- |
 | `validate` | Check config file for errors |
-| `convert`  | Convert between formats      |
+| `convert`  | Convert TOML to JSON         |
 | `query`    | Query config values          |
 | `watch`    | Watch for config changes     |
+| `defaults` | Show default theme values    |
 
-See `fernctl <command> --help` for detailed usage.
+### fern-obs
+
+OBS WebSocket bridge. See [fern-obs CLI](fern-obs.md) for full reference.
+
+```bash
+fern-obs --help
+```
+
+| Command           | Description              |
+| ----------------- | ------------------------ |
+| `daemon`          | Start bridge daemon      |
+| `start-recording` | Start OBS recording      |
+| `stop-recording`  | Stop OBS recording       |
+| `toggle-pause`    | Toggle recording pause   |
+| `start-streaming` | Start OBS streaming      |
+| `stop-streaming`  | Stop OBS streaming       |
+| `scene`           | Switch scene             |
+| `status`          | Show current OBS status  |

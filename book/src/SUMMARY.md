@@ -32,3 +32,4 @@
 # API Reference
 
 - [Overview](05-api-reference/README.md)
+- [fern-obs CLI](05-api-reference/fern-obs.md)

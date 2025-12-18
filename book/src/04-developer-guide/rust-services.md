@@ -1,10 +1,29 @@
 # Rust Services
 
-Building backend integrations with the fernctl crate.
+Building backend integrations with the Fern Shell Rust crates.
 
-## Architecture
+## Workspace Structure
 
-The fernctl crate uses hexagonal architecture:
+Fern Shell uses a Cargo workspace with specialized crates:
+
+```
+crates/
+├── fern-core/      # Shared types, paths, utilities
+├── fern-theme/     # Theme & config management CLI
+└── fern-obs/       # OBS WebSocket bridge daemon
+```
+
+### fern-core
+
+Shared infrastructure used by all crates:
+
+- `FernPaths` - XDG-compliant path utilities
+- `ServiceInfo`, `ServiceStatus` - Service state types
+- Common error types and utilities
+
+### fern-theme
+
+Theme and configuration management (formerly fernctl). Uses hexagonal architecture:
 
 ```
 Domain (pure logic)
@@ -14,11 +33,15 @@ Ports (interfaces)
 Adapters (implementations)
 ```
 
+### fern-obs
+
+OBS Studio integration via WebSocket. Writes state to a JSON file for QML consumption.
+
 ## Adding a New Adapter
 
 ### Step 1: Define the Port
 
-In `/fernctl/src/ports/outbound.rs`:
+In `crates/fern-theme/src/ports/outbound.rs`:
 
 ```rust
 /// Port for battery status monitoring
@@ -33,7 +56,7 @@ pub trait BatteryPort {
 
 ### Step 2: Implement the Adapter
 
-Create `/fernctl/src/adapters/battery.rs`:
+Create `crates/fern-theme/src/adapters/battery.rs`:
 
 ```rust
 use crate::error::FernError;
@@ -65,7 +88,7 @@ impl BatteryPort for UPowerBattery {
 
 ### Step 3: Register in mod.rs
 
-Add to `/fernctl/src/adapters/mod.rs`:
+Add to `crates/fern-theme/src/adapters/mod.rs`:
 
 ```rust
 pub mod battery;
@@ -157,6 +180,18 @@ mod tests {
 
 ## Files
 
-- `/fernctl/src/ports/` - Interface definitions
-- `/fernctl/src/adapters/` - Concrete implementations
-- `/fernctl/src/error/` - Error types
+**fern-core:**
+- `crates/fern-core/src/paths.rs` - XDG path utilities
+- `crates/fern-core/src/state.rs` - Service state types
+- `crates/fern-core/src/error.rs` - Shared error types
+
+**fern-theme:**
+- `crates/fern-theme/src/ports/` - Interface definitions
+- `crates/fern-theme/src/adapters/` - Concrete implementations
+- `crates/fern-theme/src/domain/` - Design tokens and themes
+- `crates/fern-theme/src/error/` - Error types
+
+**fern-obs:**
+- `crates/fern-obs/src/client.rs` - OBS WebSocket client
+- `crates/fern-obs/src/daemon.rs` - Persistent daemon
+- `crates/fern-obs/src/state.rs` - State types for JSON output
