@@ -2,9 +2,11 @@ import QtQuick
 import QtQuick.Layouts
 import "../config" as Config
 import "../components"
+import "../drawers"
 
 // Vertical clock module for the bar.
 // Displays time in a compact vertical format with optional date icon.
+// Clicking opens a calendar/date popout.
 ModuleContainer {
     id: root
 
@@ -13,6 +15,12 @@ ModuleContainer {
     // Size to fit content
     implicitWidth: Config.Theme.barWidth - Config.Theme.spacing.sm * 2
     implicitHeight: layout.implicitHeight + padding * 2
+
+    // Click to toggle clock popout
+    MouseArea {
+        anchors.fill: parent
+        onClicked: DrawerController.toggleDrawer("clock", root)
+    }
 
     Column {
         id: layout
