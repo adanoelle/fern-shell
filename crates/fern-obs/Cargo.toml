@@ -1,0 +1,56 @@
+[package]
+name = "fern-obs"
+description = """
+OBS Studio WebSocket bridge for Fern Shell.
+
+fern-obs provides a daemon that connects to OBS Studio via the obs-websocket
+protocol, exposing recording/streaming state and controls to the Fern Shell
+QML interface through state files and CLI commands.
+"""
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+keywords = ["obs", "obs-websocket", "streaming", "recording", "fern-shell"]
+categories = ["multimedia", "command-line-utilities"]
+
+[features]
+default = ["cli"]
+cli = ["dep:clap"]
+
+[dependencies]
+# Internal crates
+fern-core = { workspace = true }
+
+# === OBS WebSocket ===
+obws = "0.14"
+
+# === Async Runtime ===
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "fs", "sync", "signal", "time"] }
+
+# === Serialization ===
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# === Error Handling ===
+thiserror = { workspace = true }
+miette = { workspace = true }
+
+# === CLI ===
+clap = { workspace = true, optional = true }
+
+# === Utilities ===
+dirs = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+[[bin]]
+name = "fern-obs"
+path = "src/main.rs"
+required-features = ["cli"]
+
+[lints]
+workspace = true

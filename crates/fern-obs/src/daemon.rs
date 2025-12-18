@@ -1,0 +1,223 @@
+//! OBS daemon implementation.
+//!
+//! The daemon maintains a connection to OBS, handles events, and writes
+//! state updates to the state file for the QML interface to consume.
+
+use crate::client::ObsClient;
+use crate::config::ObsConfig;
+use crate::error::{Error, Result};
+use crate::state::{ObsState, StateTracker};
+use fern_core::FernPaths;
+use std::path::PathBuf;
+use std::time::Duration;
+use tokio::time::{interval, sleep};
+
+/// The OBS daemon.
+///
+/// Manages the connection to OBS and writes state updates.
+pub struct Daemon {
+    config: ObsConfig,
+    state_path: PathBuf,
+    tracker: StateTracker,
+}
+
+impl Daemon {
+    /// Creates a new daemon with the given configuration.
+    #[must_use]
+    pub fn new(config: ObsConfig) -> Self {
+        let paths = FernPaths::new();
+        let state_path = paths.service_state("obs");
+
+        Self {
+            config,
+            state_path,
+            tracker: StateTracker::new(),
+        }
+    }
+
+    /// Runs the daemon.
+    ///
+    /// This function runs indefinitely, maintaining a connection to OBS
+    /// and writing state updates.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the daemon encounters an unrecoverable error.
+    pub async fn run(&mut self) -> Result<()> {
+        // Ensure state directory exists
+        if let Some(parent) = self.state_path.parent() {
+            std::fs::create_dir_all(parent).map_err(|e| Error::io("creating state directory", e))?;
+        }
+
+        // Write initial disconnected state
+        self.write_state()?;
+
+        eprintln!(
+            "fern-obs: Starting daemon, connecting to {}:{}",
+            self.config.host, self.config.port
+        );
+        eprintln!("fern-obs: State file: {}", self.state_path.display());
+
+        let mut reconnect_attempts = 0u32;
+
+        loop {
+            match self.run_connected().await {
+                Ok(()) => {
+                    // Clean shutdown requested
+                    eprintln!("fern-obs: Shutting down");
+                    self.tracker.set_disconnected(None);
+                    self.write_state()?;
+                    break;
+                }
+                Err(e) => {
+                    reconnect_attempts += 1;
+                    let max = self.config.max_reconnect_attempts;
+
+                    if max > 0 && reconnect_attempts > max {
+                        eprintln!("fern-obs: Max reconnection attempts ({max}) exceeded");
+                        return Err(e);
+                    }
+
+                    eprintln!("fern-obs: Connection error: {e}");
+                    self.tracker.set_disconnected(Some(e.to_string()));
+                    self.write_state()?;
+
+                    let delay = Duration::from_millis(self.config.reconnect_interval_ms);
+                    eprintln!(
+                        "fern-obs: Reconnecting in {}ms (attempt {reconnect_attempts})...",
+                        delay.as_millis()
+                    );
+                    sleep(delay).await;
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Runs while connected to OBS.
+    ///
+    /// Returns when the connection is lost or shutdown is requested.
+    async fn run_connected(&mut self) -> Result<()> {
+        // Connect to OBS
+        let client = ObsClient::connect(self.config.clone()).await?;
+
+        eprintln!("fern-obs: Connected to OBS");
+
+        // Initial state sync
+        client.sync_state(&mut self.tracker).await?;
+        self.write_state()?;
+
+        // Set up update interval
+        let update_interval = Duration::from_millis(self.config.stats_interval_ms);
+        let mut ticker = interval(update_interval);
+
+        // Main event loop
+        loop {
+            tokio::select! {
+                // Periodic state update
+                _ = ticker.tick() => {
+                    // Update elapsed times
+                    self.tracker.update_elapsed();
+
+                    // Sync state from OBS (this also updates stats)
+                    if let Err(e) = client.sync_state(&mut self.tracker).await {
+                        // Connection lost
+                        return Err(e);
+                    }
+
+                    self.write_state()?;
+                }
+
+                // Handle shutdown signal
+                _ = tokio::signal::ctrl_c() => {
+                    eprintln!("fern-obs: Received shutdown signal");
+                    return Ok(());
+                }
+            }
+        }
+    }
+
+    /// Writes the current state to the state file.
+    fn write_state(&mut self) -> Result<()> {
+        self.tracker.update_elapsed();
+
+        let json = serde_json::to_string_pretty(&self.tracker.state)?;
+
+        std::fs::write(&self.state_path, json).map_err(|e| Error::io("writing state file", e))?;
+
+        Ok(())
+    }
+}
+
+/// Sends a command to OBS via a one-shot connection.
+///
+/// This is used by CLI commands that don't need to maintain a connection.
+pub async fn send_command(config: &ObsConfig, command: Command) -> Result<CommandResult> {
+    let client = ObsClient::connect(config.clone()).await?;
+
+    match command {
+        Command::StartRecording => {
+            client.start_recording().await?;
+            Ok(CommandResult::Success("Recording started".into()))
+        }
+        Command::StopRecording => {
+            let path = client.stop_recording().await?;
+            Ok(CommandResult::Success(format!("Recording saved to: {path}")))
+        }
+        Command::TogglePause => {
+            let paused = client.toggle_recording_pause().await?;
+            let msg = if paused {
+                "Recording paused"
+            } else {
+                "Recording resumed"
+            };
+            Ok(CommandResult::Success(msg.into()))
+        }
+        Command::StartStreaming => {
+            client.start_streaming().await?;
+            Ok(CommandResult::Success("Streaming started".into()))
+        }
+        Command::StopStreaming => {
+            client.stop_streaming().await?;
+            Ok(CommandResult::Success("Streaming stopped".into()))
+        }
+        Command::SetScene(name) => {
+            client.set_scene(&name).await?;
+            Ok(CommandResult::Success(format!("Scene set to: {name}")))
+        }
+        Command::GetStatus => {
+            let mut tracker = StateTracker::new();
+            client.sync_state(&mut tracker).await?;
+            Ok(CommandResult::State(tracker.state))
+        }
+    }
+}
+
+/// Commands that can be sent to OBS.
+#[derive(Debug, Clone)]
+pub enum Command {
+    /// Start recording.
+    StartRecording,
+    /// Stop recording.
+    StopRecording,
+    /// Toggle recording pause.
+    TogglePause,
+    /// Start streaming.
+    StartStreaming,
+    /// Stop streaming.
+    StopStreaming,
+    /// Set the current scene.
+    SetScene(String),
+    /// Get the current status.
+    GetStatus,
+}
+
+/// Result of a command execution.
+#[derive(Debug)]
+pub enum CommandResult {
+    /// Command succeeded with a message.
+    Success(String),
+    /// Command returned state information.
+    State(ObsState),
+}

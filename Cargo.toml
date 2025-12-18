@@ -14,8 +14,8 @@ resolver = "2"
 members = [
     "crates/fern-core",
     "crates/fern-theme",
+    "crates/fern-obs",
     # Future crates:
-    # "crates/fern-obs",
     # "crates/fernctl",
     # "crates/fernctl-tui",
 ]
@@ -49,7 +49,7 @@ notify = "6.1"
 notify-debouncer-mini = "0.4"
 
 # === Async Runtime ===
-tokio = { version = "1.37", features = ["rt-multi-thread", "macros", "fs", "sync"] }
+tokio = { version = "1.37", features = ["rt-multi-thread", "macros", "fs", "sync", "signal", "time"] }
 async-trait = "0.1"
 
 # === IPC ===
