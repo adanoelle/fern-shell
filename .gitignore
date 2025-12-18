@@ -5,10 +5,14 @@ result-*
 /cache
 
 # Rust
-/target
+**/target/
 
 # Qt Creator / VSCode / JetBrains
 .idea
 .vscode
+
+# Claude Code
+**/.claude/settings.local.json
+
 # Misc
 *.log
