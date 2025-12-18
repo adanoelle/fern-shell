@@ -1,10 +1,12 @@
 // fern/shell.qml – Main shell entry point
-// Full-screen window with curved border and left bar
+// Full-screen window with curved border, left bar, and drawer panels
 import Quickshell
 import Quickshell.Wayland
 import QtQuick
 import "config" as Config
+import "services" as Services
 import "bar"
+import "drawers"
 
 ShellRoot {
     id: root
@@ -18,9 +20,6 @@ ShellRoot {
             id: screenScope
 
             required property ShellScreen modelData
-
-            // Track bar width for exclusive zone
-            property int currentBarWidth: barWrapper.implicitWidth
 
             PanelWindow {
                 id: panelWindow
@@ -38,28 +37,32 @@ ShellRoot {
                 // Don't claim exclusive zone - let the exclusion window handle it
                 WlrLayershell.exclusionMode: ExclusionMode.Ignore
                 WlrLayershell.namespace: "fern-shell"
+                // Enable keyboard focus when drawer is open (for Escape key)
+                WlrLayershell.keyboardFocus: DrawerController.hasDrawer ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
 
                 // Transparent background - components provide visuals
                 color: "transparent"
 
-                // Input region - fixed at expanded bar width for stable hover
-                // This prevents the region from shrinking during collapse animation
+                // Input region - bar area + active drawer areas
+                // When drawer is open, expands to full width to capture all input
                 Item {
                     id: inputRegion
 
                     anchors.top: parent.top
                     anchors.bottom: parent.bottom
                     anchors.left: parent.left
-                    width: Config.Theme.barWidth  // Always 48px
+                    // When any drawer is active, expand to full width for input capture
+                    width: DrawerController.hasDrawer
+                        ? parent.width  // Full width when drawer open
+                        : Config.Theme.barWidth
                 }
 
-                // Mask input to the hover region - clicks elsewhere pass through
+                // Mask input to the active region
                 mask: Region { item: inputRegion }
 
                 // Layer for shadow effect
                 Item {
                     anchors.fill: parent
-                    // Could add shadow effect here like Caelestia
 
                     // Border: creates the curved frame around the screen
                     Border {
@@ -72,21 +75,23 @@ ShellRoot {
                     }
                 }
 
-                // Hover detection layer (covers full screen for edge detection)
-                BarInteractions {
-                    anchors.fill: parent
+                // Bar - fixed width, always visible
+                BarWrapper {
+                    id: barWrapper
+
+                    anchors.top: parent.top
+                    anchors.bottom: parent.bottom
+                    anchors.left: parent.left
+
+                    screen: screenScope.modelData
+                }
+
+                // Drawers - popouts, notifications, etc.
+                Drawers {
+                    id: drawers
+
                     bar: barWrapper
-
-                    // The bar wrapper with expand/collapse logic
-                    BarWrapper {
-                        id: barWrapper
-
-                        anchors.top: parent.top
-                        anchors.bottom: parent.bottom
-                        anchors.left: parent.left
-
-                        screen: screenScope.modelData
-                    }
+                    screen: screenScope.modelData
                 }
             }
 
@@ -103,9 +108,9 @@ ShellRoot {
                     bottom: true
                 }
 
-                // Claim exclusive zone based on bar's current width
-                // This reserves screen space dynamically as bar expands/collapses
-                exclusiveZone: screenScope.currentBarWidth
+                // Exclusive zone accounts for bar width minus outer gap
+                // This makes the gap between bar and windows equal to gaps between windows
+                exclusiveZone: Config.Theme.barWidth - Config.Theme.gapsOut
 
                 WlrLayershell.namespace: "fern-exclusion"
 
@@ -123,10 +128,18 @@ ShellRoot {
 
         function onThemeChanged() {
             console.log("Fern: Theme updated");
+            applyHyprlandConfig();
         }
     }
 
+    // Apply Hyprland configuration on startup
+    function applyHyprlandConfig(): void {
+        Services.Hyprland.configureGaps(Config.Theme.gapsIn, Config.Theme.gapsOut);
+        Services.Hyprland.configureRounding(Config.Theme.borderRounding);
+    }
+
     Component.onCompleted: {
-        console.log("Fern Shell started - curved border design");
+        console.log("Fern Shell started - fixed bar with drawer system");
+        applyHyprlandConfig();
     }
 }
