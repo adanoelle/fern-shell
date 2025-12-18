@@ -1,2 +1,3 @@
 module fern.services
 singleton Hyprland 1.0 Hyprland.qml
+singleton Obs 1.0 Obs.qml
