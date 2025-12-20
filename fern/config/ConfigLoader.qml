@@ -11,7 +11,11 @@ Singleton {
     id: root
 
     // Path to the config file
-    readonly property string configPath: Quickshell.configDir + "/fern/config.json"
+    // Use XDG_CONFIG_HOME or fallback to ~/.config
+    readonly property string configPath: {
+        const xdgConfig = Quickshell.env("XDG_CONFIG_HOME") || (Quickshell.env("HOME") + "/.config");
+        return xdgConfig + "/fern/config.json";
+    }
 
     // Fallback path (shipped with package)
     readonly property string defaultConfigPath: Qt.resolvedUrl("../config.json")
@@ -48,7 +52,7 @@ Singleton {
             config = parsed;
             loaded = true;
             error = "";
-            console.log("ConfigLoader: Configuration loaded successfully");
+            console.log("ConfigLoader: Loaded from", configPath, "- variant:", parsed.variant ?? "none");
             Theme.applyConfig(config);
         } catch (e) {
             error = "Failed to parse config: " + e.message;
@@ -113,8 +117,10 @@ Singleton {
     }
 
     Component.onCompleted: {
+        console.log("ConfigLoader: Using path:", configPath);
         // Try to load config file, fall back to defaults
         if (!configFile.text) {
+            console.log("ConfigLoader: File not found, using defaults");
             loadDefaultConfig();
         }
     }

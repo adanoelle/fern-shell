@@ -11,6 +11,9 @@ import "drawers"
 ShellRoot {
     id: root
 
+    // Force ConfigLoader to initialize (singletons are lazy-loaded)
+    property var _configLoader: Config.ConfigLoader
+
     // Create shell for each screen
     Variants {
         model: Quickshell.screens

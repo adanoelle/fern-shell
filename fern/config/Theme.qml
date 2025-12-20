@@ -56,7 +56,8 @@ QtObject {
     readonly property var _palette: _resolveTheme() === "dark" ? _darkPalette : _lightPalette
 
     function _resolveTheme(): string {
-        const configTheme = config.appearance?.theme ?? "dark";
+        // Support both old format (appearance.theme) and new fern-theme format (variant)
+        const configTheme = config.variant ?? config.appearance?.theme ?? "dark";
         if (configTheme === "auto") {
             // Future: detect system preference
             return "dark";
@@ -67,30 +68,32 @@ QtObject {
     // === TIER 2: SEMANTIC TOKENS (Configurable) ===
 
     // -- Colors --
-    readonly property color background: _palette.base
-    readonly property color surface: _palette.surface
-    readonly property color surfaceHover: _palette.surfaceHover
+    // Use fern-theme computed colors when available, fallback to internal palette
+    readonly property color background: config.colors?.background ?? _palette.base
+    readonly property color surface: config.colors?.surface ?? _palette.surface
+    readonly property color surfaceHover: config.colors?.surface_hover ?? _palette.surfaceHover
     readonly property color surfaceActive: _palette.surfaceActive
     readonly property color overlay: _palette.overlay
-    readonly property color foreground: _palette.text
-    readonly property color foregroundDim: _palette.textDim
+    readonly property color foreground: config.colors?.foreground ?? _palette.text
+    readonly property color foregroundDim: config.colors?.foreground_dim ?? _palette.textDim
 
     // Accent color - user configurable
-    readonly property color accent: config.appearance?.accent ?? _palette.blue
+    readonly property color accent: config.colors?.accent ?? config.appearance?.accent ?? _palette.blue
 
-    // Semantic status colors
-    readonly property color error: _palette.red
-    readonly property color warning: _palette.yellow
-    readonly property color success: _palette.green
-    readonly property color info: _palette.blue
+    // Semantic status colors - from fern-theme or fallback to palette
+    readonly property color error: config.colors?.error ?? _palette.red
+    readonly property color warning: config.colors?.warning ?? _palette.yellow
+    readonly property color success: config.colors?.success ?? _palette.green
+    readonly property color info: config.colors?.info ?? _palette.blue
 
     // -- Typography --
-    readonly property string fontFamily: config.appearance?.font_family ?? "Inter"
-    readonly property string fontMono: config.appearance?.font_mono ?? "JetBrainsMono Nerd Font"
-    readonly property string fontIcon: config.appearance?.font_icon ?? "Material Symbols Rounded"
+    // Support both fern-theme format (typography.*) and legacy format (appearance.*)
+    readonly property string fontFamily: config.typography?.family ?? config.appearance?.font_family ?? "Inter"
+    readonly property string fontMono: config.typography?.mono ?? config.appearance?.font_mono ?? "JetBrainsMono Nerd Font"
+    readonly property string fontIcon: config.typography?.icon ?? config.appearance?.font_icon ?? "Material Symbols Rounded"
 
-    // Font size scale (not configurable - breaks layouts)
-    readonly property var fontSize: ({
+    // Font size scale - from fern-theme or defaults
+    readonly property var fontSize: config.typography?.size ?? ({
         xs: 10,
         sm: 12,
         md: 14,
@@ -100,12 +103,13 @@ QtObject {
     })
 
     // -- Radius --
+    // Support both fern-theme format (radius.*) and legacy format (appearance.radius.*)
     readonly property var radius: ({
-        none: config.appearance?.radius?.none ?? 0,
-        sm: config.appearance?.radius?.sm ?? 4,
-        md: config.appearance?.radius?.md ?? 8,
-        lg: config.appearance?.radius?.lg ?? 12,
-        full: config.appearance?.radius?.full ?? 9999
+        none: config.radius?.none ?? config.appearance?.radius?.none ?? 0,
+        sm: config.radius?.sm ?? config.appearance?.radius?.sm ?? 4,
+        md: config.radius?.md ?? config.appearance?.radius?.md ?? 8,
+        lg: config.radius?.lg ?? config.appearance?.radius?.lg ?? 12,
+        full: config.radius?.full ?? config.appearance?.radius?.full ?? 9999
     })
 
     // -- Spacing (not configurable - breaks layouts) --
@@ -189,6 +193,12 @@ QtObject {
     readonly property color textPrimary: foreground
     readonly property color textSecondary: foregroundDim
     readonly property color textAccent: accent
+    // Convenience aliases
+    readonly property color text: foreground
+    readonly property color textMuted: foregroundDim
+
+    // -- Border --
+    readonly property color border: overlay
 
     // === HELPER FUNCTIONS ===
 
