@@ -13,6 +13,9 @@ Singleton {
     // All workspaces
     readonly property var workspaces: Hyprland.workspaces
 
+    // All windows (toplevels)
+    readonly property var toplevels: Hyprland.toplevels
+
     // Currently focused workspace
     readonly property HyprlandWorkspace focusedWorkspace: Hyprland.focusedWorkspace
 
@@ -30,8 +33,11 @@ Singleton {
     }
 
     // Set a Hyprland keyword (config option)
+    // Note: keyword is a hyprctl command, not a dispatcher
+    // TODO: Find correct QuickShell API for executing commands
     function setKeyword(keyword: string, value: string): void {
-        Hyprland.dispatch(`keyword ${keyword} ${value}`);
+        // Disabled - Quickshell.execDetached not available in this version
+        console.log("Fern: Would set", keyword, "=", value);
     }
 
     // Configure window gaps from Fern's theme settings
@@ -68,6 +74,17 @@ Singleton {
         return false;
     }
 
+    // Get windows for a specific workspace
+    function windowsForWorkspace(wsId: int): list<var> {
+        return toplevels.values.filter(w => w.workspace?.id === wsId);
+    }
+
+    // Get the most recent window in a workspace (last in list)
+    function mostRecentWindowForWorkspace(wsId: int): var {
+        const windows = windowsForWorkspace(wsId);
+        return windows.length > 0 ? windows[windows.length - 1] : null;
+    }
+
     // === EVENT HANDLING ===
 
     // Refresh state on relevant Hyprland events
@@ -84,10 +101,11 @@ Singleton {
                 Hyprland.refreshMonitors();
             }
 
-            // Window events (affects workspace occupancy)
+            // Window events (affects workspace occupancy and window list)
             if (["openwindow", "closewindow", "movewindow",
                  "windowtitle", "activewindow"].includes(eventName)) {
                 Hyprland.refreshWorkspaces();
+                Hyprland.refreshToplevels();
             }
         }
     }
