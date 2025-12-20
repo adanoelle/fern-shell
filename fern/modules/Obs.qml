@@ -3,9 +3,10 @@ import QtQuick.Layouts
 import "../config" as Config
 import "../components"
 import "../services" as Services
+import "../drawers"
 
 // OBS recording/streaming control module for the bar.
-// Shows status indicator with timecode, click to toggle recording.
+// Shows status indicator, click to open OBS control drawer.
 ModuleContainer {
     id: root
 
@@ -15,27 +16,15 @@ ModuleContainer {
     readonly property bool isPaused: Services.Obs.isPaused
     readonly property bool isStreaming: Services.Obs.isStreaming
 
-    // Status indicator color
-    property color indicatorColor: Services.Obs.statusColor
+    // Status indicator color (with fallback for undefined)
+    property color indicatorColor: Services.Obs.statusColor ?? Config.Theme.overlay
+
+    // Dim entire module when not connected
+    opacity: isConnected ? 1.0 : 0.5
 
     // Size to fit content
     implicitWidth: Config.Theme.barWidth - Config.Theme.spacing.sm * 2
     implicitHeight: layout.implicitHeight + padding * 2
-
-    // Click to toggle recording
-    MouseArea {
-        anchors.fill: parent
-        cursorShape: Qt.PointingHandCursor
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-
-        onClicked: (mouse) => {
-            if (mouse.button === Qt.LeftButton) {
-                Services.Obs.toggleRecording();
-            } else if (mouse.button === Qt.RightButton) {
-                Services.Obs.togglePause();
-            }
-        }
-    }
 
     Column {
         id: layout
@@ -84,15 +73,14 @@ ModuleContainer {
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: {
-                if (!root.isConnected) return "\ue654";  // videocam_off
-                if (root.isRecording) return "\ue04b";   // videocam (filled when recording)
-                if (root.isStreaming) return "\uef71";   // cast (streaming)
-                return "\ue04b";  // videocam (default)
+                if (!root.isConnected) return "\ue04c";  // videocam_off (Material Symbols)
+                if (root.isRecording) return "\ue04b";   // videocam
+                if (root.isStreaming) return "\uef71";   // cast
+                return "\ue04b";  // videocam (default/ready)
             }
             font.family: Config.Theme.fontIcon
             font.pixelSize: Config.Theme.fontSize.lg
             color: root.indicatorColor
-            opacity: root.isConnected ? 1.0 : 0.5
         }
 
         // Timecode display (when recording or streaming)
@@ -143,24 +131,40 @@ ModuleContainer {
     }
 
     // Tooltip
-    ToolTip {
+    Rectangle {
         id: tooltip
-        visible: mouseArea.containsMouse
-        text: {
-            if (!root.isConnected) return "OBS: Disconnected\nClick to start daemon";
+
+        property string text: {
+            if (!root.isConnected) return "OBS: Disconnected";
             let tip = "OBS: " + Services.Obs.statusText;
             if (root.isRecording) {
-                tip += "\nDuration: " + Services.Obs.recordingTimecode;
+                tip += "\n" + Services.Obs.recordingTimecode;
             }
             if (root.isStreaming) {
                 tip += "\nStream: " + Services.Obs.streamingTimecode;
             }
-            if (Services.Obs.currentScene) {
-                tip += "\nScene: " + Services.Obs.currentScene;
-            }
-            tip += "\n\nLeft-click: Toggle recording";
-            tip += "\nRight-click: Toggle pause";
             return tip;
+        }
+
+        visible: mouseArea.containsMouse
+        color: Config.Theme.surface
+        border.color: Config.Theme.border
+        border.width: 1
+        radius: Config.Theme.radius.sm
+        width: tooltipText.implicitWidth + Config.Theme.spacing.md * 2
+        height: tooltipText.implicitHeight + Config.Theme.spacing.sm * 2
+
+        // Position above the module
+        x: (parent.width - width) / 2
+        y: -height - Config.Theme.spacing.sm
+
+        Text {
+            id: tooltipText
+            anchors.centerIn: parent
+            text: tooltip.text
+            font.family: Config.Theme.fontFamily
+            font.pixelSize: Config.Theme.fontSize.sm
+            color: Config.Theme.text
         }
     }
 
@@ -168,44 +172,8 @@ ModuleContainer {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        propagateComposedEvents: true
+        cursorShape: Qt.PointingHandCursor
 
-        onClicked: (mouse) => {
-            if (!root.isConnected) {
-                Services.Obs.startDaemon();
-                return;
-            }
-            if (mouse.button === Qt.LeftButton) {
-                Services.Obs.toggleRecording();
-            } else if (mouse.button === Qt.RightButton) {
-                Services.Obs.togglePause();
-            }
-        }
-    }
-}
-
-// Simple tooltip component
-component ToolTip: Rectangle {
-    property string text: ""
-
-    visible: false
-    color: Config.Theme.surface
-    border.color: Config.Theme.border
-    border.width: 1
-    radius: Config.Theme.radius.sm
-    width: tooltipText.implicitWidth + Config.Theme.spacing.md * 2
-    height: tooltipText.implicitHeight + Config.Theme.spacing.sm * 2
-
-    // Position above the module
-    x: (parent.width - width) / 2
-    y: -height - Config.Theme.spacing.sm
-
-    Text {
-        id: tooltipText
-        anchors.centerIn: parent
-        text: parent.text
-        font.family: Config.Theme.fontFamily
-        font.pixelSize: Config.Theme.fontSize.sm
-        color: Config.Theme.text
+        onClicked: DrawerController.toggleDrawer("obs", root)
     }
 }

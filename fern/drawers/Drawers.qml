@@ -121,6 +121,15 @@ Item {
             }
         }
 
+        // OBS control drawer
+        DrawerPanel {
+            id: obsDrawer
+            name: "obs"
+            contentWidth: 180
+
+            ObsContent {}
+        }
+
         // Future: Dynamic tray menu drawers via Repeater
         // Repeater {
         //     model: SystemTray.items.values

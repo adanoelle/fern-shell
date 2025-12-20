@@ -11,7 +11,7 @@ Singleton {
     // === STATE FILE PATH ===
     // XDG state directory + fern/obs-state.json
     readonly property string statePath: {
-        const xdgState = Qt.getenv("XDG_STATE_HOME") || (Qt.getenv("HOME") + "/.local/state");
+        const xdgState = Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state");
         return xdgState + "/fern/obs-state.json";
     }
 

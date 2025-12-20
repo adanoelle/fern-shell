@@ -4,4 +4,5 @@ Drawers 1.0 Drawers.qml
 DrawerPanel 1.0 DrawerPanel.qml
 DrawerWrapper 1.0 DrawerWrapper.qml
 DrawerBackground 1.0 DrawerBackground.qml
+ObsContent 1.0 ObsContent.qml
 SessionContent 1.0 SessionContent.qml
