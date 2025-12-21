@@ -24,7 +24,7 @@
 //! ## Example
 //!
 //! ```rust,ignore
-//! use fernctl::domain::theme::{Theme, ThemeVariant};
+//! use fern_theme::domain::theme::{Theme, ThemeVariant};
 //!
 //! // Load default dark theme
 //! let theme = Theme::dark();
@@ -209,7 +209,7 @@ impl BarPosition {
 /// # Creating a Theme
 ///
 /// ```rust
-/// use fernctl::domain::theme::Theme;
+/// use fern_theme::domain::theme::Theme;
 ///
 /// // Default dark theme
 /// let theme = Theme::dark();
@@ -224,7 +224,7 @@ impl BarPosition {
 /// # Accessing Tokens
 ///
 /// ```rust
-/// use fernctl::domain::theme::Theme;
+/// use fern_theme::domain::theme::Theme;
 ///
 /// let theme = Theme::dark();
 ///
@@ -270,7 +270,7 @@ impl Theme {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::theme::Theme;
+    /// use fern_theme::domain::theme::Theme;
     ///
     /// let theme = Theme::dark();
     /// assert_eq!(theme.variant.name(), "dark");
@@ -291,7 +291,7 @@ impl Theme {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::theme::Theme;
+    /// use fern_theme::domain::theme::Theme;
     ///
     /// let theme = Theme::light();
     /// assert_eq!(theme.variant.name(), "light");

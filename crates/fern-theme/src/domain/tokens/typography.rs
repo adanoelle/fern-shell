@@ -37,7 +37,7 @@ use std::fmt;
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::typography::FontFamily;
+/// use fern_theme::domain::tokens::typography::FontFamily;
 ///
 /// let font = FontFamily::new("Inter");
 /// assert_eq!(font.name(), "Inter");
@@ -58,7 +58,7 @@ impl FontFamily {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::typography::FontFamily;
+    /// use fern_theme::domain::tokens::typography::FontFamily;
     ///
     /// let font = FontFamily::new("Inter");
     /// ```
@@ -72,7 +72,7 @@ impl FontFamily {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::typography::FontFamily;
+    /// use fern_theme::domain::tokens::typography::FontFamily;
     ///
     /// let font = FontFamily::new("Inter");
     /// assert_eq!(font.name(), "Inter");
@@ -87,7 +87,7 @@ impl FontFamily {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::typography::FontFamily;
+    /// use fern_theme::domain::tokens::typography::FontFamily;
     ///
     /// let font = FontFamily::default_primary();
     /// assert_eq!(font.name(), "Inter");
@@ -102,7 +102,7 @@ impl FontFamily {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::typography::FontFamily;
+    /// use fern_theme::domain::tokens::typography::FontFamily;
     ///
     /// let font = FontFamily::default_mono();
     /// assert_eq!(font.name(), "JetBrainsMono Nerd Font");
@@ -117,7 +117,7 @@ impl FontFamily {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::typography::FontFamily;
+    /// use fern_theme::domain::tokens::typography::FontFamily;
     ///
     /// let font = FontFamily::default_icon();
     /// assert_eq!(font.name(), "Material Symbols Rounded");
@@ -161,7 +161,7 @@ impl From<String> for FontFamily {
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::typography::FontSize;
+/// use fern_theme::domain::tokens::typography::FontSize;
 ///
 /// let size = FontSize::Md;
 /// assert_eq!(size.pixels(), 14);
@@ -189,7 +189,7 @@ impl FontSize {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::typography::FontSize;
+    /// use fern_theme::domain::tokens::typography::FontSize;
     ///
     /// assert_eq!(FontSize::Xs.pixels(), 10);
     /// assert_eq!(FontSize::Sm.pixels(), 12);
@@ -215,7 +215,7 @@ impl FontSize {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::typography::FontSize;
+    /// use fern_theme::domain::tokens::typography::FontSize;
     ///
     /// assert_eq!(FontSize::Md.name(), "md");
     /// ```
@@ -236,7 +236,7 @@ impl FontSize {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::typography::FontSize;
+    /// use fern_theme::domain::tokens::typography::FontSize;
     ///
     /// assert_eq!(FontSize::from_name("md"), Some(FontSize::Md));
     /// assert_eq!(FontSize::from_name("invalid"), None);
@@ -288,7 +288,7 @@ impl fmt::Display for FontSize {
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::typography::FontSizeScale;
+/// use fern_theme::domain::tokens::typography::FontSizeScale;
 ///
 /// let scale = FontSizeScale::default();
 /// assert_eq!(scale.md, 14);
@@ -375,7 +375,7 @@ impl Default for FontSizeScale {
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::typography::Typography;
+/// use fern_theme::domain::tokens::typography::Typography;
 ///
 /// let typography = Typography::default();
 /// assert_eq!(typography.family.name(), "Inter");

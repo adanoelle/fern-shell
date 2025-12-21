@@ -134,7 +134,7 @@ impl ConfigLocation {
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::error::ConfigError;
+/// use fern_theme::error::ConfigError;
 ///
 /// let error = ConfigError::InvalidColor {
 ///     value: "#gg0000".to_string(),

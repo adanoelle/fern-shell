@@ -112,8 +112,8 @@
 //! ## Programmatic Usage
 //!
 //! ```rust,ignore
-//! use fernctl::commands::query::{run, QueryOptions};
-//! use fernctl::adapters::TomlConfigAdapter;
+//! use fern_theme::commands::query::{run, QueryOptions};
+//! use fern_theme::adapters::TomlConfigAdapter;
 //!
 //! let adapter = TomlConfigAdapter::new();
 //! let options = QueryOptions { verbose: false };
@@ -132,7 +132,7 @@ use std::path::Path;
 /// # Example
 ///
 /// ```rust
-/// use fernctl::commands::query::QueryOptions;
+/// use fern_theme::commands::query::QueryOptions;
 ///
 /// let options = QueryOptions {
 ///     verbose: true,
@@ -187,8 +187,8 @@ pub const AVAILABLE_PATHS: &[&str] = &[
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::commands::query::{run, QueryOptions};
-/// use fernctl::adapters::TomlConfigAdapter;
+/// use fern_theme::commands::query::{run, QueryOptions};
+/// use fern_theme::adapters::TomlConfigAdapter;
 ///
 /// let adapter = TomlConfigAdapter::new();
 /// let options = QueryOptions::default();
@@ -256,7 +256,7 @@ pub fn run<P: AsRef<Path>>(
 /// # Example
 ///
 /// ```rust
-/// use fernctl::commands::query::find_similar_paths;
+/// use fern_theme::commands::query::find_similar_paths;
 ///
 /// let suggestions = find_similar_paths("colors.backgroud");
 /// assert!(suggestions.contains(&"colors.background".to_string()));

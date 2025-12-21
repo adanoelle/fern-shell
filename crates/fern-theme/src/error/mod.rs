@@ -28,7 +28,7 @@
 //! ## Usage
 //!
 //! ```rust,ignore
-//! use fernctl::error::{Result, ConfigError, Severity};
+//! use fern_theme::error::{Result, ConfigError, Severity};
 //!
 //! fn validate_color(value: &str) -> Result<Color> {
 //!     parse_hex_color(value).map_err(|_| ConfigError::InvalidColor {
@@ -69,7 +69,7 @@ use thiserror::Error;
 /// This type alias reduces boilerplate when returning errors from functions:
 ///
 /// ```rust,ignore
-/// use fernctl::error::Result;
+/// use fern_theme::error::Result;
 ///
 /// fn load_config(path: &Path) -> Result<Config> {
 ///     // ...
@@ -97,7 +97,7 @@ pub type Result<T> = std::result::Result<T, FernError>;
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::error::{FernError, Result};
+/// use fern_theme::error::{FernError, Result};
 ///
 /// fn process_config(path: &Path) -> Result<Theme> {
 ///     let content = std::fs::read_to_string(path)

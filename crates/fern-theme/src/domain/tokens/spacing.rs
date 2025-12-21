@@ -39,7 +39,7 @@
 //! Spacing uses const generics to encode the multiplier in the type:
 //!
 //! ```rust
-//! use fernctl::domain::tokens::spacing::*;
+//! use fern_theme::domain::tokens::spacing::*;
 //!
 //! // The multiplier is part of the type, not a runtime value
 //! let _sm: Spacing<2> = Spacing::new();
@@ -54,7 +54,7 @@
 //! The type system ensures spacing values are always on the scale:
 //!
 //! ```rust
-//! use fernctl::domain::tokens::spacing::*;
+//! use fern_theme::domain::tokens::spacing::*;
 //!
 //! // These are the only valid spacing values
 //! let xs = SpacingXs::pixels();  // 4
@@ -96,7 +96,7 @@ pub const SPACING_BASE: u16 = 4;
 /// encode the spacing value in the type system.
 ///
 /// ```rust
-/// use fernctl::domain::tokens::spacing::*;
+/// use fern_theme::domain::tokens::spacing::*;
 /// use std::mem::size_of;
 ///
 /// assert_eq!(size_of::<Spacing<2>>(), 0);
@@ -105,7 +105,7 @@ pub const SPACING_BASE: u16 = 4;
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::spacing::*;
+/// use fern_theme::domain::tokens::spacing::*;
 ///
 /// // Using const generics directly
 /// let _spacing: Spacing<3> = Spacing::new();
@@ -127,7 +127,7 @@ impl<const N: u8> Spacing<N> {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::spacing::Spacing;
+    /// use fern_theme::domain::tokens::spacing::Spacing;
     ///
     /// let spacing: Spacing<2> = Spacing::new();
     /// ```
@@ -143,7 +143,7 @@ impl<const N: u8> Spacing<N> {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::spacing::*;
+    /// use fern_theme::domain::tokens::spacing::*;
     ///
     /// assert_eq!(SpacingSm::multiplier(), 2);
     /// assert_eq!(SpacingLg::multiplier(), 4);
@@ -160,7 +160,7 @@ impl<const N: u8> Spacing<N> {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::spacing::*;
+    /// use fern_theme::domain::tokens::spacing::*;
     ///
     /// assert_eq!(SpacingXs::pixels(), 4);   // 1 * 4
     /// assert_eq!(SpacingSm::pixels(), 8);   // 2 * 4
@@ -178,7 +178,7 @@ impl<const N: u8> Spacing<N> {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::spacing::*;
+    /// use fern_theme::domain::tokens::spacing::*;
     ///
     /// assert_eq!(SpacingSm::name(), Some("sm"));
     /// assert_eq!(Spacing::<7>::name(), None);  // Not a standard level
@@ -240,7 +240,7 @@ impl<const N: u8> Serialize for Spacing<N> {
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::spacing::SpacingXs;
+/// use fern_theme::domain::tokens::spacing::SpacingXs;
 ///
 /// assert_eq!(SpacingXs::pixels(), 4);
 /// ```
@@ -256,7 +256,7 @@ pub type SpacingXs = Spacing<1>;
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::spacing::SpacingSm;
+/// use fern_theme::domain::tokens::spacing::SpacingSm;
 ///
 /// assert_eq!(SpacingSm::pixels(), 8);
 /// ```
@@ -272,7 +272,7 @@ pub type SpacingSm = Spacing<2>;
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::spacing::SpacingMd;
+/// use fern_theme::domain::tokens::spacing::SpacingMd;
 ///
 /// assert_eq!(SpacingMd::pixels(), 12);
 /// ```
@@ -288,7 +288,7 @@ pub type SpacingMd = Spacing<3>;
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::spacing::SpacingLg;
+/// use fern_theme::domain::tokens::spacing::SpacingLg;
 ///
 /// assert_eq!(SpacingLg::pixels(), 16);
 /// ```
@@ -304,7 +304,7 @@ pub type SpacingLg = Spacing<4>;
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::spacing::SpacingXl;
+/// use fern_theme::domain::tokens::spacing::SpacingXl;
 ///
 /// assert_eq!(SpacingXl::pixels(), 24);
 /// ```
@@ -319,7 +319,7 @@ pub type SpacingXl = Spacing<6>;
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::spacing::SpacingValue;
+/// use fern_theme::domain::tokens::spacing::SpacingValue;
 ///
 /// let spacing = SpacingValue::from_name("md").unwrap();
 /// assert_eq!(spacing.pixels(), 12);
@@ -353,7 +353,7 @@ impl SpacingValue {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::spacing::SpacingValue;
+    /// use fern_theme::domain::tokens::spacing::SpacingValue;
     ///
     /// assert_eq!(SpacingValue::from_name("sm"), Some(SpacingValue::Sm));
     /// assert_eq!(SpacingValue::from_name("invalid"), None);
@@ -375,7 +375,7 @@ impl SpacingValue {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::spacing::SpacingValue;
+    /// use fern_theme::domain::tokens::spacing::SpacingValue;
     ///
     /// assert_eq!(SpacingValue::Md.pixels(), 12);
     /// ```
@@ -395,7 +395,7 @@ impl SpacingValue {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::spacing::SpacingValue;
+    /// use fern_theme::domain::tokens::spacing::SpacingValue;
     ///
     /// assert_eq!(SpacingValue::Md.name(), "md");
     /// ```
@@ -415,7 +415,7 @@ impl SpacingValue {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::spacing::SpacingValue;
+    /// use fern_theme::domain::tokens::spacing::SpacingValue;
     ///
     /// for spacing in SpacingValue::all() {
     ///     println!("{}: {}px", spacing.name(), spacing.pixels());

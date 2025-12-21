@@ -30,7 +30,7 @@
 //! ## Example
 //!
 //! ```rust,ignore
-//! use fernctl::error::{ConfigError, Notifiable, Notification};
+//! use fern_theme::error::{ConfigError, Notifiable, Notification};
 //!
 //! let error = ConfigError::InvalidColor {
 //!     value: "#gg0000".to_string(),
@@ -73,7 +73,7 @@ use std::time::SystemTime;
 /// # Example Implementation
 ///
 /// ```rust,ignore
-/// use fernctl::error::{Notifiable, Severity};
+/// use fern_theme::error::{Notifiable, Severity};
 ///
 /// struct MyError {
 ///     message: String,
@@ -258,7 +258,7 @@ impl Notification {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::error::{Notification, Severity};
+    /// use fern_theme::error::{Notification, Severity};
     ///
     /// let notification = Notification::new(
     ///     Severity::Info,
@@ -289,7 +289,7 @@ impl Notification {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::error::Notification;
+    /// use fern_theme::error::Notification;
     ///
     /// let notification = Notification::info("Config Loaded", "All modules initialized");
     /// ```
@@ -305,7 +305,7 @@ impl Notification {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::error::Notification;
+    /// use fern_theme::error::Notification;
     ///
     /// let notification = Notification::warning(
     ///     "Unknown Key",
@@ -324,7 +324,7 @@ impl Notification {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::error::Notification;
+    /// use fern_theme::error::Notification;
     ///
     /// let notification = Notification::error(
     ///     "Invalid Color",
@@ -341,7 +341,7 @@ impl Notification {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::error::Notification;
+    /// use fern_theme::error::Notification;
     ///
     /// let notification = Notification::error("Invalid Color", "...")
     ///     .with_suggestion("Use hex format: #RRGGBB");
@@ -357,7 +357,7 @@ impl Notification {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::error::Notification;
+    /// use fern_theme::error::Notification;
     ///
     /// let notification = Notification::error("Invalid Color", "...")
     ///     .with_code("fern::config::invalid_color");
@@ -373,7 +373,7 @@ impl Notification {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::error::{Notification, Severity};
+    /// use fern_theme::error::{Notification, Severity};
     ///
     /// let info = Notification::info("Test", "Test");
     /// let error = Notification::error("Test", "Test");

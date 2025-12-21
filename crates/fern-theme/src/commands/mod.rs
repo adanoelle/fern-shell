@@ -50,8 +50,8 @@
 //! Commands are called with their dependencies injected:
 //!
 //! ```rust,ignore
-//! use fernctl::commands::watch;
-//! use fernctl::adapters::{TomlConfigAdapter, FileSystemAdapter};
+//! use fern_theme::commands::watch;
+//! use fern_theme::adapters::{TomlConfigAdapter, FileSystemAdapter};
 //!
 //! let config_adapter = TomlConfigAdapter::new();
 //! let persist_adapter = FileSystemAdapter::new();

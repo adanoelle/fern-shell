@@ -28,7 +28,7 @@
 //! This enables filtering:
 //!
 //! ```rust
-//! use fernctl::error::Severity;
+//! use fern_theme::error::Severity;
 //!
 //! let min_severity = Severity::Warning;
 //! let current = Severity::Info;
@@ -62,7 +62,7 @@ use std::fmt;
 /// severe and [`Fatal`](Severity::Fatal) being the most:
 ///
 /// ```rust
-/// use fernctl::error::Severity;
+/// use fern_theme::error::Severity;
 ///
 /// assert!(Severity::Info < Severity::Warning);
 /// assert!(Severity::Warning < Severity::Error);
@@ -74,7 +74,7 @@ use std::fmt;
 /// Each severity has both a human-readable name and an icon for terminal output:
 ///
 /// ```rust
-/// use fernctl::error::Severity;
+/// use fern_theme::error::Severity;
 ///
 /// assert_eq!(Severity::Error.as_str(), "error");
 /// assert_eq!(Severity::Error.icon(), "✗");
@@ -85,7 +85,7 @@ use std::fmt;
 /// `Severity` serializes to lowercase strings for JSON/TOML compatibility:
 ///
 /// ```rust
-/// use fernctl::error::Severity;
+/// use fern_theme::error::Severity;
 ///
 /// let json = serde_json::to_string(&Severity::Warning).unwrap();
 /// assert_eq!(json, "\"warning\"");
@@ -154,7 +154,7 @@ impl Severity {
     /// # Examples
     ///
     /// ```rust
-    /// use fernctl::error::Severity;
+    /// use fern_theme::error::Severity;
     ///
     /// assert_eq!(Severity::Info.as_str(), "info");
     /// assert_eq!(Severity::Warning.as_str(), "warning");
@@ -179,7 +179,7 @@ impl Severity {
     /// # Examples
     ///
     /// ```rust
-    /// use fernctl::error::Severity;
+    /// use fern_theme::error::Severity;
     ///
     /// assert_eq!(Severity::Info.icon(), "ℹ");
     /// assert_eq!(Severity::Warning.icon(), "⚠");
@@ -222,7 +222,7 @@ impl Severity {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::error::Severity;
+    /// use fern_theme::error::Severity;
     ///
     /// let sev = Severity::Error;
     /// let reset = "\x1b[0m";
@@ -247,7 +247,7 @@ impl Severity {
     /// # Examples
     ///
     /// ```rust
-    /// use fernctl::error::Severity;
+    /// use fern_theme::error::Severity;
     ///
     /// assert!(!Severity::Info.is_error());
     /// assert!(!Severity::Warning.is_error());
@@ -266,7 +266,7 @@ impl Severity {
     /// # Examples
     ///
     /// ```rust
-    /// use fernctl::error::Severity;
+    /// use fern_theme::error::Severity;
     ///
     /// assert!(!Severity::Error.is_fatal());
     /// assert!(Severity::Fatal.is_fatal());
@@ -283,7 +283,7 @@ impl Severity {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::error::Severity;
+    /// use fern_theme::error::Severity;
     ///
     /// for sev in Severity::all() {
     ///     println!("{}: {}", sev.icon(), sev.as_str());

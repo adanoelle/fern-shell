@@ -154,8 +154,8 @@
 //! ## Programmatic Usage
 //!
 //! ```rust,ignore
-//! use fernctl::commands::watch::{run, WatchOptions, WatchEvent};
-//! use fernctl::adapters::{TomlConfigAdapter, FileSystemAdapter};
+//! use fern_theme::commands::watch::{run, WatchOptions, WatchEvent};
+//! use fern_theme::adapters::{TomlConfigAdapter, FileSystemAdapter};
 //!
 //! let config_adapter = TomlConfigAdapter::new();
 //! let persist_adapter = FileSystemAdapter::new();
@@ -210,7 +210,7 @@ use std::time::Duration;
 /// # Example
 ///
 /// ```rust
-/// use fernctl::commands::watch::WatchOptions;
+/// use fern_theme::commands::watch::WatchOptions;
 ///
 /// let options = WatchOptions {
 ///     debounce_ms: 200,  // Wait 200ms for events to settle
@@ -366,8 +366,8 @@ pub type EventHandler = dyn Fn(WatchEvent);
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::commands::watch::{run, WatchOptions};
-/// use fernctl::adapters::{TomlConfigAdapter, FileSystemAdapter};
+/// use fern_theme::commands::watch::{run, WatchOptions};
+/// use fern_theme::adapters::{TomlConfigAdapter, FileSystemAdapter};
 /// use std::path::Path;
 ///
 /// let config_adapter = TomlConfigAdapter::new();

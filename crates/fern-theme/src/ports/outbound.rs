@@ -136,8 +136,8 @@ use std::path::Path;
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::ports::outbound::PersistPort;
-/// use fernctl::adapters::FileSystemAdapter;
+/// use fern_theme::ports::outbound::PersistPort;
+/// use fern_theme::adapters::FileSystemAdapter;
 ///
 /// let adapter = FileSystemAdapter::new();
 ///
@@ -250,8 +250,8 @@ pub trait PersistPort: Send + Sync {
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::ports::outbound::NotifyPort;
-/// use fernctl::error::Notification;
+/// use fern_theme::ports::outbound::NotifyPort;
+/// use fern_theme::error::Notification;
 ///
 /// // Send an info notification
 /// let notification = Notification::info(
@@ -418,8 +418,8 @@ pub trait NotifyPort: Send + Sync {
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::ports::outbound::IpcPort;
-/// use fernctl::adapters::DbusIpcAdapter;
+/// use fern_theme::ports::outbound::IpcPort;
+/// use fern_theme::adapters::DbusIpcAdapter;
 ///
 /// let ipc = DbusIpcAdapter::new()?;
 ///
@@ -563,8 +563,8 @@ pub trait IpcPort: Send + Sync {
 /// # Example
 ///
 /// ```rust
-/// use fernctl::ports::outbound::{NotifyPort, NullNotifyPort};
-/// use fernctl::error::Notification;
+/// use fern_theme::ports::outbound::{NotifyPort, NullNotifyPort};
+/// use fern_theme::error::Notification;
 ///
 /// let notifier = NullNotifyPort;
 /// let notification = Notification::info("Test", "Body");
@@ -593,7 +593,7 @@ impl NotifyPort for NullNotifyPort {
 /// # Example
 ///
 /// ```rust
-/// use fernctl::ports::outbound::{IpcPort, NullIpcPort};
+/// use fern_theme::ports::outbound::{IpcPort, NullIpcPort};
 ///
 /// let ipc = NullIpcPort;
 /// assert!(!ipc.is_shell_running());

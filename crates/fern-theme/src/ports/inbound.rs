@@ -48,8 +48,8 @@
 //! Inbound ports are typically used in this sequence:
 //!
 //! ```rust,ignore
-//! use fernctl::ports::inbound::*;
-//! use fernctl::adapters::TomlConfigAdapter;
+//! use fern_theme::ports::inbound::*;
+//! use fern_theme::adapters::TomlConfigAdapter;
 //!
 //! // 1. Load raw configuration
 //! let config_adapter = TomlConfigAdapter::new();
@@ -67,9 +67,9 @@
 //! To add support for a new configuration format (e.g., YAML):
 //!
 //! ```rust,ignore
-//! use fernctl::ports::inbound::ConfigPort;
-//! use fernctl::domain::config::RawConfig;
-//! use fernctl::error::Result;
+//! use fern_theme::ports::inbound::ConfigPort;
+//! use fern_theme::domain::config::RawConfig;
+//! use fern_theme::error::Result;
 //!
 //! struct YamlConfigAdapter;
 //!
@@ -119,7 +119,7 @@ use std::path::Path;
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::ports::inbound::{ConfigPort, RawConfig};
+/// use fern_theme::ports::inbound::{ConfigPort, RawConfig};
 ///
 /// // Load produces RawConfig
 /// let raw: RawConfig = adapter.load(toml_content)?;
@@ -395,8 +395,8 @@ impl std::fmt::Display for ConfigWarning {
 /// Adapters implement this trait to add support for new configuration formats:
 ///
 /// ```rust,ignore
-/// use fernctl::ports::inbound::{ConfigPort, RawConfig, SourceFormat};
-/// use fernctl::error::Result;
+/// use fern_theme::ports::inbound::{ConfigPort, RawConfig, SourceFormat};
+/// use fern_theme::error::Result;
 ///
 /// struct TomlConfigAdapter;
 ///
@@ -544,7 +544,7 @@ pub trait ConfigPort: Send + Sync {
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::ports::inbound::ValidatePort;
+/// use fern_theme::ports::inbound::ValidatePort;
 ///
 /// let validator = DefaultValidator::new();
 /// let result = validator.validate(&raw_config);
@@ -632,7 +632,7 @@ pub trait ValidatePort: Send + Sync {
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::ports::inbound::QueryPort;
+/// use fern_theme::ports::inbound::QueryPort;
 ///
 /// let query = DefaultQueryAdapter::new();
 /// let theme = Theme::dark();

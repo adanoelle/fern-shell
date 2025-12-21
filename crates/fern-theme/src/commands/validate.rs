@@ -89,8 +89,8 @@
 //! ## Programmatic Usage
 //!
 //! ```rust,ignore
-//! use fernctl::commands::validate::{run, ValidateOptions};
-//! use fernctl::adapters::TomlConfigAdapter;
+//! use fern_theme::commands::validate::{run, ValidateOptions};
+//! use fern_theme::adapters::TomlConfigAdapter;
 //!
 //! let adapter = TomlConfigAdapter::new();
 //! let options = ValidateOptions { verbose: true };
@@ -117,7 +117,7 @@ use std::path::Path;
 /// # Example
 ///
 /// ```rust
-/// use fernctl::commands::validate::ValidateOptions;
+/// use fern_theme::commands::validate::ValidateOptions;
 ///
 /// let options = ValidateOptions {
 ///     verbose: true,
@@ -192,8 +192,8 @@ pub struct ValidateResult {
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::commands::validate::{run, ValidateOptions};
-/// use fernctl::adapters::TomlConfigAdapter;
+/// use fern_theme::commands::validate::{run, ValidateOptions};
+/// use fern_theme::adapters::TomlConfigAdapter;
 /// use std::path::Path;
 ///
 /// let adapter = TomlConfigAdapter::new();

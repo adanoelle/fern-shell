@@ -51,7 +51,7 @@
 //! Import the prelude for common types:
 //!
 //! ```rust,ignore
-//! use fernctl::domain::prelude::*;
+//! use fern_theme::domain::prelude::*;
 //!
 //! let surface: ColorToken<Surface> = ColorToken::from_hex("#313244")?;
 //! let spacing = SpacingMd::pixels(); // 12

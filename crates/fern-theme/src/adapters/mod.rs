@@ -41,9 +41,9 @@
 //! ## Example
 //!
 //! ```rust,ignore
-//! use fernctl::adapters::{TomlConfigAdapter, FileSystemAdapter};
-//! use fernctl::ports::inbound::ConfigPort;
-//! use fernctl::ports::outbound::PersistPort;
+//! use fern_theme::adapters::{TomlConfigAdapter, FileSystemAdapter};
+//! use fern_theme::ports::inbound::ConfigPort;
+//! use fern_theme::ports::outbound::PersistPort;
 //!
 //! // Load configuration
 //! let config_adapter = TomlConfigAdapter::new();
@@ -77,8 +77,8 @@ use std::path::Path;
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::adapters::TomlConfigAdapter;
-/// use fernctl::ports::inbound::ConfigPort;
+/// use fern_theme::adapters::TomlConfigAdapter;
+/// use fern_theme::ports::inbound::ConfigPort;
 ///
 /// let adapter = TomlConfigAdapter::new();
 /// let raw = adapter.load_from_file("~/.config/fern/config.toml")?;
@@ -156,8 +156,8 @@ fn toml_to_json(toml: toml::Value) -> serde_json::Value {
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::adapters::JsonConfigAdapter;
-/// use fernctl::ports::inbound::ConfigPort;
+/// use fern_theme::adapters::JsonConfigAdapter;
+/// use fern_theme::ports::inbound::ConfigPort;
 ///
 /// let adapter = JsonConfigAdapter::new();
 /// let raw = adapter.load_from_file("config.json")?;
@@ -202,8 +202,8 @@ impl ConfigPort for JsonConfigAdapter {
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::adapters::FileSystemAdapter;
-/// use fernctl::ports::outbound::PersistPort;
+/// use fern_theme::adapters::FileSystemAdapter;
+/// use fern_theme::ports::outbound::PersistPort;
 ///
 /// let adapter = FileSystemAdapter::new();
 /// adapter.save_theme(&theme, "config.json")?;

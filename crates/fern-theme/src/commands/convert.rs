@@ -116,8 +116,8 @@
 //! ## Programmatic Usage
 //!
 //! ```rust,ignore
-//! use fernctl::commands::convert::{run, ConvertOptions};
-//! use fernctl::adapters::{TomlConfigAdapter, FileSystemAdapter};
+//! use fern_theme::commands::convert::{run, ConvertOptions};
+//! use fern_theme::adapters::{TomlConfigAdapter, FileSystemAdapter};
 //!
 //! let config_adapter = TomlConfigAdapter::new();
 //! let persist_adapter = FileSystemAdapter::new();
@@ -144,7 +144,7 @@ use std::path::Path;
 /// # Example
 ///
 /// ```rust
-/// use fernctl::commands::convert::ConvertOptions;
+/// use fern_theme::commands::convert::ConvertOptions;
 ///
 /// let options = ConvertOptions {
 ///     verbose: true,
@@ -229,8 +229,8 @@ pub struct ConvertResult {
 /// # Example
 ///
 /// ```rust,ignore
-/// use fernctl::commands::convert::{run, ConvertOptions};
-/// use fernctl::adapters::{TomlConfigAdapter, FileSystemAdapter};
+/// use fern_theme::commands::convert::{run, ConvertOptions};
+/// use fern_theme::adapters::{TomlConfigAdapter, FileSystemAdapter};
 /// use std::path::Path;
 ///
 /// let config_adapter = TomlConfigAdapter::new();
@@ -304,7 +304,7 @@ pub fn run<P: AsRef<Path>, Q: AsRef<Path>>(
 /// # Examples
 ///
 /// ```rust
-/// use fernctl::commands::convert::derive_output_path;
+/// use fern_theme::commands::convert::derive_output_path;
 /// use std::path::PathBuf;
 ///
 /// assert_eq!(

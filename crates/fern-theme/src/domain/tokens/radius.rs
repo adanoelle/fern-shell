@@ -129,7 +129,7 @@ pub trait InputRadius: RadiusSemantic {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::radius::*;
+/// use fern_theme::domain::tokens::radius::*;
 ///
 /// assert_eq!(RadiusNone::DEFAULT_PIXELS, 0);
 /// ```
@@ -161,7 +161,7 @@ impl InputRadius for RadiusNone {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::radius::*;
+/// use fern_theme::domain::tokens::radius::*;
 ///
 /// assert_eq!(RadiusSm::DEFAULT_PIXELS, 4);
 /// ```
@@ -194,7 +194,7 @@ impl InputRadius for RadiusSm {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::radius::*;
+/// use fern_theme::domain::tokens::radius::*;
 ///
 /// assert_eq!(RadiusMd::DEFAULT_PIXELS, 8);
 /// ```
@@ -226,7 +226,7 @@ impl InputRadius for RadiusMd {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::radius::*;
+/// use fern_theme::domain::tokens::radius::*;
 ///
 /// assert_eq!(RadiusLg::DEFAULT_PIXELS, 12);
 /// ```
@@ -261,7 +261,7 @@ impl ModuleRadius for RadiusLg {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::radius::*;
+/// use fern_theme::domain::tokens::radius::*;
 ///
 /// assert_eq!(RadiusFull::DEFAULT_PIXELS, 9999);
 /// ```
@@ -289,7 +289,7 @@ impl RadiusSemantic for RadiusFull {
 /// # Default Values
 ///
 /// ```rust
-/// use fernctl::domain::tokens::radius::RadiusScale;
+/// use fern_theme::domain::tokens::radius::RadiusScale;
 ///
 /// let scale = RadiusScale::default();
 /// assert_eq!(scale.none, 0);
@@ -359,7 +359,7 @@ impl RadiusScale {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::radius::*;
+    /// use fern_theme::domain::tokens::radius::*;
     ///
     /// let scale = RadiusScale::default();
     /// assert_eq!(scale.get::<RadiusMd>(), 8);

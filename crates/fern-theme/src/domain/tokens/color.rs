@@ -43,7 +43,7 @@
 //! ## Creating Colors
 //!
 //! ```rust
-//! use fernctl::domain::tokens::color::*;
+//! use fern_theme::domain::tokens::color::*;
 //!
 //! // From hex string
 //! let color = ColorToken::<Surface>::from_hex("#313244").unwrap();
@@ -168,7 +168,7 @@ pub trait StatusRole: ColorRole {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::color::*;
+/// use fern_theme::domain::tokens::color::*;
 ///
 /// let bg: ColorToken<Background> = ColorToken::from_hex("#1e1e2e").unwrap();
 /// ```
@@ -194,7 +194,7 @@ impl BackgroundRole for Background {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::color::*;
+/// use fern_theme::domain::tokens::color::*;
 ///
 /// let surface: ColorToken<Surface> = ColorToken::from_hex("#313244").unwrap();
 /// ```
@@ -217,7 +217,7 @@ impl BackgroundRole for Surface {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::color::*;
+/// use fern_theme::domain::tokens::color::*;
 ///
 /// let hover: ColorToken<SurfaceHover> = ColorToken::from_hex("#45475a").unwrap();
 /// ```
@@ -240,7 +240,7 @@ impl BackgroundRole for SurfaceHover {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::color::*;
+/// use fern_theme::domain::tokens::color::*;
 ///
 /// let text: ColorToken<Foreground> = ColorToken::from_hex("#cdd6f4").unwrap();
 /// ```
@@ -263,7 +263,7 @@ impl ForegroundRole for Foreground {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::color::*;
+/// use fern_theme::domain::tokens::color::*;
 ///
 /// let dim: ColorToken<ForegroundDim> = ColorToken::from_hex("#a6adc8").unwrap();
 /// ```
@@ -286,7 +286,7 @@ impl ForegroundRole for ForegroundDim {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::color::*;
+/// use fern_theme::domain::tokens::color::*;
 ///
 /// let accent: ColorToken<Accent> = ColorToken::from_hex("#89b4fa").unwrap();
 /// ```
@@ -308,7 +308,7 @@ impl AccentRole for Accent {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::color::*;
+/// use fern_theme::domain::tokens::color::*;
 ///
 /// let error: ColorToken<Error> = ColorToken::from_hex("#f38ba8").unwrap();
 /// ```
@@ -330,7 +330,7 @@ impl StatusRole for Error {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::color::*;
+/// use fern_theme::domain::tokens::color::*;
 ///
 /// let warning: ColorToken<Warning> = ColorToken::from_hex("#f9e2af").unwrap();
 /// ```
@@ -352,7 +352,7 @@ impl StatusRole for Warning {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::color::*;
+/// use fern_theme::domain::tokens::color::*;
 ///
 /// let success: ColorToken<Success> = ColorToken::from_hex("#a6e3a1").unwrap();
 /// ```
@@ -374,7 +374,7 @@ impl StatusRole for Success {}
 /// # Example
 ///
 /// ```rust
-/// use fernctl::domain::tokens::color::*;
+/// use fern_theme::domain::tokens::color::*;
 ///
 /// let info: ColorToken<Info> = ColorToken::from_hex("#89dceb").unwrap();
 /// ```
@@ -412,7 +412,7 @@ impl StatusRole for Info {}
 /// Despite the type parameter, `ColorToken` has the same size as four bytes:
 ///
 /// ```rust
-/// use fernctl::domain::tokens::color::*;
+/// use fern_theme::domain::tokens::color::*;
 /// use std::mem::size_of;
 ///
 /// assert_eq!(size_of::<ColorToken<Surface>>(), 4);
@@ -423,7 +423,7 @@ impl StatusRole for Info {}
 /// # Creating Colors
 ///
 /// ```rust
-/// use fernctl::domain::tokens::color::*;
+/// use fern_theme::domain::tokens::color::*;
 ///
 /// // From hex string (most common)
 /// let color = ColorToken::<Surface>::from_hex("#313244").unwrap();
@@ -438,7 +438,7 @@ impl StatusRole for Info {}
 /// # Converting to Output Formats
 ///
 /// ```rust
-/// use fernctl::domain::tokens::color::*;
+/// use fern_theme::domain::tokens::color::*;
 ///
 /// let color = ColorToken::<Surface>::from_hex("#313244").unwrap();
 ///
@@ -472,7 +472,7 @@ impl<Role: ColorRole> ColorToken<Role> {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::color::*;
+    /// use fern_theme::domain::tokens::color::*;
     ///
     /// let color = ColorToken::<Surface>::from_rgb(0x31, 0x32, 0x44);
     /// assert_eq!(color.alpha(), 255);
@@ -500,7 +500,7 @@ impl<Role: ColorRole> ColorToken<Role> {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::color::*;
+    /// use fern_theme::domain::tokens::color::*;
     ///
     /// let color = ColorToken::<Surface>::from_rgba(0x31, 0x32, 0x44, 0x80);
     /// assert_eq!(color.alpha(), 0x80);
@@ -535,7 +535,7 @@ impl<Role: ColorRole> ColorToken<Role> {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::color::*;
+    /// use fern_theme::domain::tokens::color::*;
     ///
     /// // 6-digit hex
     /// let color = ColorToken::<Surface>::from_hex("#313244").unwrap();
@@ -593,7 +593,7 @@ impl<Role: ColorRole> ColorToken<Role> {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::color::*;
+    /// use fern_theme::domain::tokens::color::*;
     ///
     /// let color = ColorToken::<Surface>::from_hex("#313244").unwrap();
     /// assert_eq!(color.to_rgb_tuple(), (0x31, 0x32, 0x44));
@@ -608,7 +608,7 @@ impl<Role: ColorRole> ColorToken<Role> {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::color::*;
+    /// use fern_theme::domain::tokens::color::*;
     ///
     /// let color = ColorToken::<Surface>::from_rgba(0x31, 0x32, 0x44, 0x80);
     /// assert_eq!(color.to_rgba_tuple(), (0x31, 0x32, 0x44, 0x80));
@@ -625,7 +625,7 @@ impl<Role: ColorRole> ColorToken<Role> {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::color::*;
+    /// use fern_theme::domain::tokens::color::*;
     ///
     /// let opaque = ColorToken::<Surface>::from_hex("#313244").unwrap();
     /// assert_eq!(opaque.to_hex(), "#313244");
@@ -647,7 +647,7 @@ impl<Role: ColorRole> ColorToken<Role> {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::color::*;
+    /// use fern_theme::domain::tokens::color::*;
     ///
     /// let opaque = ColorToken::<Surface>::from_rgb(49, 50, 68);
     /// assert_eq!(opaque.to_css_rgb(), "rgb(49, 50, 68)");
@@ -670,7 +670,7 @@ impl<Role: ColorRole> ColorToken<Role> {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::color::*;
+    /// use fern_theme::domain::tokens::color::*;
     ///
     /// let color = ColorToken::<Surface>::from_rgb(0, 0, 0);
     /// assert_eq!(color.role_name(), "surface");
@@ -685,7 +685,7 @@ impl<Role: ColorRole> ColorToken<Role> {
     /// # Example
     ///
     /// ```rust
-    /// use fernctl::domain::tokens::color::*;
+    /// use fern_theme::domain::tokens::color::*;
     ///
     /// let opaque = ColorToken::<Surface>::from_hex("#313244").unwrap();
     /// let transparent = opaque.with_alpha(128);
