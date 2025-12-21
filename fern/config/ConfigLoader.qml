@@ -2,6 +2,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import "../services" as Services
 
 // ConfigLoader handles reading and watching the JSON config file.
 // The config.toml is converted to config.json by Nix at build time.
@@ -45,25 +46,39 @@ Singleton {
         }
     }
 
+    // Maximum config file size (1MB) - prevents DoS from malicious files
+    readonly property int maxConfigSize: 1024 * 1024
+
     // Parse JSON config string
     function parseConfig(jsonText: string) {
+        // Size limit check to prevent memory issues
+        if (jsonText.length > maxConfigSize) {
+            error = "Config file too large (max " + (maxConfigSize / 1024) + "KB)";
+            Services.Log.error("ConfigLoader", error, { size: jsonText.length, max: maxConfigSize });
+            loadDefaultConfig();
+            return;
+        }
+
         try {
             const parsed = JSON.parse(jsonText);
             config = parsed;
             loaded = true;
             error = "";
-            console.log("ConfigLoader: Loaded from", configPath, "- variant:", parsed.variant ?? "none");
+            Services.Log.info("ConfigLoader", "Loaded config", {
+                path: configPath,
+                variant: parsed.variant ?? "none"
+            });
             Theme.applyConfig(config);
         } catch (e) {
             error = "Failed to parse config: " + e.message;
-            console.error("ConfigLoader:", error);
+            Services.Log.error("ConfigLoader", "Failed to parse config", { error: e.message });
             loadDefaultConfig();
         }
     }
 
     // Load default/fallback config
     function loadDefaultConfig() {
-        console.log("ConfigLoader: Loading default configuration");
+        Services.Log.info("ConfigLoader", "Loading default configuration");
         config = getDefaultConfig();
         loaded = true;
         Theme.applyConfig(config);
@@ -117,10 +132,10 @@ Singleton {
     }
 
     Component.onCompleted: {
-        console.log("ConfigLoader: Using path:", configPath);
+        Services.Log.info("ConfigLoader", "Initialized", { path: configPath });
         // Try to load config file, fall back to defaults
         if (!configFile.text) {
-            console.log("ConfigLoader: File not found, using defaults");
+            Services.Log.info("ConfigLoader", "File not found, using defaults");
             loadDefaultConfig();
         }
     }

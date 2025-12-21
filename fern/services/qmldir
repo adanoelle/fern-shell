@@ -1,3 +1,5 @@
 module fern.services
 singleton Hyprland 1.0 Hyprland.qml
+singleton Log 1.0 Log.qml
 singleton Obs 1.0 Obs.qml
+singleton Tick 1.0 Tick.qml

@@ -70,7 +70,7 @@ Singleton {
             state = parsed;
             stateLoaded = true;
         } catch (e) {
-            console.error("Obs: Failed to parse state:", e.message);
+            Log.error("Obs", "Failed to parse state", { error: e.message });
             state = { connected: false, error: "Failed to parse state file" };
         }
     }
@@ -153,6 +153,6 @@ Singleton {
     }
 
     Component.onCompleted: {
-        console.log("Obs: Service initialized, watching", statePath);
+        Log.info("Obs", "Service initialized", { statePath: statePath });
     }
 }
