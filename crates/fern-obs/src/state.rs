@@ -362,15 +362,44 @@ impl Default for StateTracker {
 mod tests {
     use super::*;
 
+    // ========================================================================
+    // Timecode formatting tests
+    // ========================================================================
+
     #[test]
-    fn timecode_format() {
+    fn timecode_format_zero() {
         assert_eq!(RecordingState::format_timecode(0), "00:00");
+    }
+
+    #[test]
+    fn timecode_format_seconds() {
+        assert_eq!(RecordingState::format_timecode(1), "00:01");
         assert_eq!(RecordingState::format_timecode(59), "00:59");
+    }
+
+    #[test]
+    fn timecode_format_minutes() {
         assert_eq!(RecordingState::format_timecode(60), "01:00");
+        assert_eq!(RecordingState::format_timecode(90), "01:30");
         assert_eq!(RecordingState::format_timecode(3599), "59:59");
+    }
+
+    #[test]
+    fn timecode_format_hours() {
         assert_eq!(RecordingState::format_timecode(3600), "01:00:00");
         assert_eq!(RecordingState::format_timecode(3661), "01:01:01");
+        assert_eq!(RecordingState::format_timecode(86399), "23:59:59");
     }
+
+    #[test]
+    fn timecode_format_large_values() {
+        // 100 hours
+        assert_eq!(RecordingState::format_timecode(360000), "100:00:00");
+    }
+
+    // ========================================================================
+    // ObsState tests
+    // ========================================================================
 
     #[test]
     fn obs_state_default_disconnected() {
@@ -378,6 +407,167 @@ mod tests {
         assert!(!state.connected);
         assert!(!state.recording.active);
         assert!(!state.streaming.active);
+        assert!(state.current_scene.is_none());
+        assert!(state.scenes.is_empty());
+        assert!(state.stats.is_none());
+        assert!(state.error.is_none());
+    }
+
+    #[test]
+    fn obs_state_disconnected_constructor() {
+        let state = ObsState::disconnected();
+        assert!(!state.connected);
+        assert!(state.error.is_none());
+    }
+
+    #[test]
+    fn obs_state_with_error() {
+        let state = ObsState::with_error("Connection refused");
+        assert!(!state.connected);
+        assert_eq!(state.error.as_deref(), Some("Connection refused"));
+    }
+
+    #[test]
+    fn obs_state_with_error_string_ownership() {
+        let error = String::from("Network error");
+        let state = ObsState::with_error(error);
+        assert_eq!(state.error.as_deref(), Some("Network error"));
+    }
+
+    #[test]
+    fn obs_state_touch_sets_timestamp() {
+        let mut state = ObsState::default();
+        assert!(state.updated_at_secs.is_none());
+
+        state.touch();
+        assert!(state.updated_at_secs.is_some());
+        assert!(state.updated_at_secs.unwrap() > 0);
+    }
+
+    // ========================================================================
+    // RecordingState tests
+    // ========================================================================
+
+    #[test]
+    fn recording_state_idle() {
+        let state = RecordingState::idle();
+        assert!(!state.active);
+        assert!(!state.paused);
+        assert_eq!(state.elapsed_secs, 0);
+        assert!(state.output_path.is_none());
+        assert!(state.timecode.is_none());
+    }
+
+    #[test]
+    fn recording_state_active() {
+        let state = RecordingState::active(125);
+        assert!(state.active);
+        assert!(!state.paused);
+        assert_eq!(state.elapsed_secs, 125);
+        assert_eq!(state.timecode.as_deref(), Some("02:05"));
+    }
+
+    #[test]
+    fn recording_state_paused() {
+        let state = RecordingState::paused(3700);
+        assert!(state.active);
+        assert!(state.paused);
+        assert_eq!(state.elapsed_secs, 3700);
+        assert_eq!(state.timecode.as_deref(), Some("01:01:40"));
+    }
+
+    // ========================================================================
+    // StreamingState tests
+    // ========================================================================
+
+    #[test]
+    fn streaming_state_idle() {
+        let state = StreamingState::idle();
+        assert!(!state.active);
+        assert_eq!(state.elapsed_secs, 0);
+        assert!(state.timecode.is_none());
+        assert!(state.bitrate_kbps.is_none());
+        assert!(!state.reconnecting);
+    }
+
+    #[test]
+    fn streaming_state_active() {
+        let state = StreamingState::active(300);
+        assert!(state.active);
+        assert_eq!(state.elapsed_secs, 300);
+        assert_eq!(state.timecode.as_deref(), Some("05:00"));
+        assert!(!state.reconnecting);
+    }
+
+    // ========================================================================
+    // ObsStats tests
+    // ========================================================================
+
+    #[test]
+    fn obs_stats_default() {
+        let stats = ObsStats::default();
+        assert_eq!(stats.cpu_usage, 0.0);
+        assert_eq!(stats.memory_mb, 0.0);
+        assert!(stats.render_drop_percent.is_none());
+        assert!(stats.output_drop_percent.is_none());
+    }
+
+    #[test]
+    fn obs_stats_percentages() {
+        let mut stats = ObsStats {
+            render_missed_frames: 10,
+            render_total_frames: 1000,
+            output_skipped_frames: 5,
+            output_total_frames: 500,
+            ..Default::default()
+        };
+
+        stats.calculate_percentages();
+
+        assert!((stats.render_drop_percent.unwrap() - 1.0).abs() < 0.001);
+        assert!((stats.output_drop_percent.unwrap() - 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn obs_stats_percentages_zero_frames() {
+        let mut stats = ObsStats::default();
+        stats.calculate_percentages();
+
+        // Should not calculate percentages when total is zero
+        assert!(stats.render_drop_percent.is_none());
+        assert!(stats.output_drop_percent.is_none());
+    }
+
+    #[test]
+    fn obs_stats_percentages_no_drops() {
+        let mut stats = ObsStats {
+            render_missed_frames: 0,
+            render_total_frames: 1000,
+            output_skipped_frames: 0,
+            output_total_frames: 1000,
+            ..Default::default()
+        };
+
+        stats.calculate_percentages();
+
+        assert!((stats.render_drop_percent.unwrap() - 0.0).abs() < 0.001);
+        assert!((stats.output_drop_percent.unwrap() - 0.0).abs() < 0.001);
+    }
+
+    // ========================================================================
+    // StateTracker tests
+    // ========================================================================
+
+    #[test]
+    fn state_tracker_new() {
+        let tracker = StateTracker::new();
+        assert!(!tracker.state.connected);
+    }
+
+    #[test]
+    fn state_tracker_default() {
+        let tracker = StateTracker::default();
+        assert!(!tracker.state.connected);
     }
 
     #[test]
@@ -402,18 +592,179 @@ mod tests {
     }
 
     #[test]
-    fn obs_stats_percentages() {
-        let mut stats = ObsStats {
-            render_missed_frames: 10,
+    fn state_tracker_streaming_lifecycle() {
+        let mut tracker = StateTracker::new();
+
+        tracker.set_connected();
+        assert!(tracker.state.connected);
+
+        tracker.start_streaming();
+        assert!(tracker.state.streaming.active);
+
+        tracker.stop_streaming();
+        assert!(!tracker.state.streaming.active);
+    }
+
+    #[test]
+    fn state_tracker_disconnected_clears_state() {
+        let mut tracker = StateTracker::new();
+
+        // Set up some active state
+        tracker.set_connected();
+        tracker.start_recording();
+        tracker.start_streaming();
+        tracker.set_scene("Gaming");
+
+        // Disconnect with error
+        tracker.set_disconnected(Some("Connection lost".into()));
+
+        assert!(!tracker.state.connected);
+        assert_eq!(tracker.state.error.as_deref(), Some("Connection lost"));
+        assert!(!tracker.state.recording.active);
+        assert!(!tracker.state.streaming.active);
+    }
+
+    #[test]
+    fn state_tracker_disconnected_without_error() {
+        let mut tracker = StateTracker::new();
+        tracker.set_connected();
+        tracker.set_disconnected(None);
+
+        assert!(!tracker.state.connected);
+        assert!(tracker.state.error.is_none());
+    }
+
+    #[test]
+    fn state_tracker_scene_management() {
+        let mut tracker = StateTracker::new();
+
+        tracker.set_scene("Gaming");
+        assert_eq!(tracker.state.current_scene.as_deref(), Some("Gaming"));
+
+        tracker.set_scene("Desktop");
+        assert_eq!(tracker.state.current_scene.as_deref(), Some("Desktop"));
+    }
+
+    #[test]
+    fn state_tracker_scenes_list() {
+        let mut tracker = StateTracker::new();
+
+        let scenes = vec!["Gaming".into(), "Desktop".into(), "BRB".into()];
+        tracker.set_scenes(scenes);
+
+        assert_eq!(tracker.state.scenes.len(), 3);
+        assert_eq!(tracker.state.scenes[0], "Gaming");
+        assert_eq!(tracker.state.scenes[1], "Desktop");
+        assert_eq!(tracker.state.scenes[2], "BRB");
+    }
+
+    #[test]
+    fn state_tracker_set_stats() {
+        let mut tracker = StateTracker::new();
+
+        let stats = ObsStats {
+            cpu_usage: 15.5,
+            memory_mb: 512.0,
+            render_missed_frames: 5,
             render_total_frames: 1000,
-            output_skipped_frames: 5,
-            output_total_frames: 500,
             ..Default::default()
         };
 
-        stats.calculate_percentages();
+        tracker.set_stats(stats);
 
-        assert!((stats.render_drop_percent.unwrap() - 1.0).abs() < 0.001);
-        assert!((stats.output_drop_percent.unwrap() - 1.0).abs() < 0.001);
+        let saved_stats = tracker.state.stats.as_ref().unwrap();
+        assert!((saved_stats.cpu_usage - 15.5).abs() < 0.001);
+        assert!((saved_stats.memory_mb - 512.0).abs() < 0.001);
+        // Percentages should be calculated
+        assert!(saved_stats.render_drop_percent.is_some());
+    }
+
+    #[test]
+    fn state_tracker_update_elapsed() {
+        let mut tracker = StateTracker::new();
+        tracker.set_connected();
+        tracker.start_recording();
+        tracker.start_streaming();
+
+        // Update elapsed - this should set timestamp
+        let state = tracker.update_elapsed();
+        assert!(state.updated_at_secs.is_some());
+    }
+
+    // ========================================================================
+    // Serialization tests
+    // ========================================================================
+
+    #[test]
+    fn obs_state_serialization_roundtrip() {
+        let mut state = ObsState {
+            connected: true,
+            recording: RecordingState::active(120),
+            streaming: StreamingState::active(300),
+            current_scene: Some("Gaming".into()),
+            scenes: vec!["Gaming".into(), "Desktop".into()],
+            stats: Some(ObsStats {
+                cpu_usage: 10.0,
+                memory_mb: 256.0,
+                active_fps: 60.0,
+                ..Default::default()
+            }),
+            error: None,
+            updated_at_secs: None,
+        };
+        state.touch();
+
+        let json = serde_json::to_string(&state).expect("serialization failed");
+        let deserialized: ObsState = serde_json::from_str(&json).expect("deserialization failed");
+
+        assert_eq!(deserialized.connected, state.connected);
+        assert_eq!(deserialized.recording.active, state.recording.active);
+        assert_eq!(deserialized.recording.elapsed_secs, state.recording.elapsed_secs);
+        assert_eq!(deserialized.streaming.active, state.streaming.active);
+        assert_eq!(deserialized.current_scene, state.current_scene);
+        assert_eq!(deserialized.scenes, state.scenes);
+        assert!(deserialized.stats.is_some());
+    }
+
+    #[test]
+    fn obs_state_serialization_skips_none_fields() {
+        let state = ObsState::disconnected();
+        let json = serde_json::to_string(&state).expect("serialization failed");
+
+        // These optional fields should not appear in JSON when None
+        assert!(!json.contains("current_scene"));
+        assert!(!json.contains("stats"));
+        assert!(!json.contains("error"));
+        assert!(!json.contains("updated_at_secs"));
+    }
+
+    #[test]
+    fn recording_state_serialization() {
+        let state = RecordingState::active(3661);
+        let json = serde_json::to_string(&state).expect("serialization failed");
+
+        assert!(json.contains("\"active\":true"));
+        assert!(json.contains("\"elapsed_secs\":3661"));
+        assert!(json.contains("\"timecode\":\"01:01:01\""));
+    }
+
+    #[test]
+    fn streaming_state_serialization() {
+        let state = StreamingState::active(600);
+        let json = serde_json::to_string(&state).expect("serialization failed");
+
+        assert!(json.contains("\"active\":true"));
+        assert!(json.contains("\"elapsed_secs\":600"));
+        assert!(json.contains("\"timecode\":\"10:00\""));
+    }
+
+    #[test]
+    fn obs_state_deserialization_minimal() {
+        // Minimal valid JSON - all optional fields missing
+        let json = r#"{"connected":false,"recording":{"active":false,"paused":false,"elapsed_secs":0},"streaming":{"active":false,"elapsed_secs":0,"reconnecting":false},"scenes":[]}"#;
+        let state: ObsState = serde_json::from_str(json).expect("deserialization failed");
+
+        assert!(!state.connected);
+        assert!(state.current_scene.is_none());
     }
 }
