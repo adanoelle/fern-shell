@@ -22,6 +22,11 @@ ModuleContainer {
     // Dim entire module when not connected
     opacity: isConnected ? 1.0 : 0.5
 
+    // Cleanup on destruction - stop any running animations
+    Component.onDestruction: {
+        pulseAnimation.stop();
+    }
+
     // Size to fit content
     implicitWidth: Config.Theme.barWidth - Config.Theme.spacing.sm * 2
     implicitHeight: layout.implicitHeight + padding * 2
@@ -44,6 +49,7 @@ ModuleContainer {
 
             // Pulsing animation when recording
             SequentialAnimation on opacity {
+                id: pulseAnimation
                 running: root.isRecording && !root.isPaused
                 loops: Animation.Infinite
 

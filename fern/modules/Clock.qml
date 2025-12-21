@@ -16,6 +16,29 @@ ModuleContainer {
     implicitWidth: Config.Theme.barWidth - Config.Theme.spacing.sm * 2
     implicitHeight: layout.implicitHeight + padding * 2
 
+    // Update timer - only runs when module is visible
+    Timer {
+        id: updateTimer
+        interval: 1000
+        running: root.visible
+        repeat: true
+        triggeredOnStart: true
+
+        onTriggered: root.updateTime()
+    }
+
+    function updateTime(): void {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const mins = now.getMinutes().toString().padStart(2, '0');
+        timeText.text = hours + "\n" + mins;
+    }
+
+    // Cleanup on destruction
+    Component.onDestruction: {
+        updateTimer.stop();
+    }
+
     // Click to toggle clock popout
     MouseArea {
         anchors.fill: parent
@@ -49,27 +72,8 @@ ModuleContainer {
             color: root.textColor
             lineHeight: 1.1
 
-            // Format time with newline between hours and minutes
-            text: {
-                const now = new Date();
-                const hours = now.getHours().toString().padStart(2, '0');
-                const mins = now.getMinutes().toString().padStart(2, '0');
-                return hours + "\n" + mins;
-            }
-
-            Timer {
-                interval: 1000
-                running: true
-                repeat: true
-                triggeredOnStart: true
-
-                onTriggered: {
-                    const now = new Date();
-                    const hours = now.getHours().toString().padStart(2, '0');
-                    const mins = now.getMinutes().toString().padStart(2, '0');
-                    timeText.text = hours + "\n" + mins;
-                }
-            }
+            // Initial value set by timer's triggeredOnStart
+            text: "00\n00"
         }
     }
 }
