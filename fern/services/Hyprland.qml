@@ -25,6 +25,24 @@ Singleton {
     // Currently focused monitor
     readonly property HyprlandMonitor focusedMonitor: Hyprland.focusedMonitor
 
+    // === CACHED LOOKUPS (O(1) instead of O(n)) ===
+
+    // Cache of most recent window per workspace - updated on window changes
+    // Use this for O(1) lookups instead of calling mostRecentWindowForWorkspace()
+    readonly property var mostRecentByWorkspace: {
+        // This binding recalculates when toplevels changes
+        const _toplevels = toplevels;  // Capture for dependency
+        const result = {};
+
+        for (const ws of workspaces.values) {
+            const wsId = ws.id;
+            const windows = toplevels.values.filter(w => w.workspace?.id === wsId);
+            result[wsId] = windows.length > 0 ? windows[windows.length - 1] : null;
+        }
+
+        return result;
+    }
+
     // === HELPERS ===
 
     // Dispatch a Hyprland command
@@ -37,20 +55,20 @@ Singleton {
     // TODO: Find correct QuickShell API for executing commands
     function setKeyword(keyword: string, value: string): void {
         // Disabled - Quickshell.execDetached not available in this version
-        console.log("Fern: Would set", keyword, "=", value);
+        Log.debug("Hyprland", "Would set keyword", { keyword: keyword, value: value });
     }
 
     // Configure window gaps from Fern's theme settings
     function configureGaps(gapsIn: int, gapsOut: int): void {
         setKeyword("general:gaps_in", gapsIn.toString());
         setKeyword("general:gaps_out", gapsOut.toString());
-        console.log("Fern: Configured Hyprland gaps - in:", gapsIn, "out:", gapsOut);
+        Log.info("Hyprland", "Configured gaps", { in: gapsIn, out: gapsOut });
     }
 
     // Configure window rounding to match Fern's border rounding
     function configureRounding(radius: int): void {
         setKeyword("decoration:rounding", radius.toString());
-        console.log("Fern: Configured Hyprland rounding:", radius);
+        Log.info("Hyprland", "Configured rounding", { radius: radius });
     }
 
     // Get monitor for a specific screen
@@ -80,6 +98,7 @@ Singleton {
     }
 
     // Get the most recent window in a workspace (last in list)
+    // NOTE: Prefer using mostRecentByWorkspace[wsId] for O(1) lookup
     function mostRecentWindowForWorkspace(wsId: int): var {
         const windows = windowsForWorkspace(wsId);
         return windows.length > 0 ? windows[windows.length - 1] : null;

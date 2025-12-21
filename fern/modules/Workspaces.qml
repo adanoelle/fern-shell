@@ -42,7 +42,8 @@ ModuleContainer {
                 required property int index
                 readonly property int wsId: index + 1
                 readonly property bool isActive: wsId === root.activeWsId
-                readonly property var recentWindow: Services.Hyprland.mostRecentWindowForWorkspace(wsId)
+                // Use cached O(1) lookup instead of O(n) function call
+                readonly property var recentWindow: Services.Hyprland.mostRecentByWorkspace[wsId] ?? null
                 readonly property bool isOccupied: recentWindow !== null
 
                 // Only show workspaces with windows (or active)
@@ -95,12 +96,14 @@ ModuleContainer {
                     sourceSize.width: width
                     sourceSize.height: height
 
-                    source: {
-                        if (!wsIndicator.recentWindow) return "";
-                        const appClass = wsIndicator.recentWindow.lastIpcObject?.class ?? "";
-                        const entry = DesktopEntries.heuristicLookup(appClass);
-                        const iconName = entry?.icon ?? "application-x-executable";
-                        return Quickshell.iconPath(iconName, "application-x-executable");
+                    // Safe icon lookup with error handling
+                    source: wsIndicator.getIconPath()
+
+                    // Handle failed image loads gracefully
+                    onStatusChanged: {
+                        if (status === Image.Error) {
+                            source = "";  // Clear broken source
+                        }
                     }
 
                     Behavior on width {
@@ -108,6 +111,25 @@ ModuleContainer {
                             duration: Config.Theme.duration.normal
                             easing.type: Config.Theme.easing.standard
                         }
+                    }
+                }
+
+                // Icon lookup function with error handling
+                function getIconPath(): string {
+                    try {
+                        if (!wsIndicator.recentWindow) return "";
+                        const appClass = wsIndicator.recentWindow.lastIpcObject?.class ?? "";
+                        if (!appClass) return "";
+
+                        const entry = DesktopEntries.heuristicLookup(appClass);
+                        const iconName = entry?.icon ?? "application-x-executable";
+                        return Quickshell.iconPath(iconName, "application-x-executable") || "";
+                    } catch (e) {
+                        Services.Log.warn("Workspaces", "Failed to get icon", {
+                            wsId: wsIndicator.wsId,
+                            error: String(e)
+                        });
+                        return "";
                     }
                 }
 
