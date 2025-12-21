@@ -31,6 +31,7 @@ use clap::{Parser, Subcommand};
 use fern_obs::config::ObsConfig;
 use fern_obs::daemon::{send_command, Command, CommandResult, Daemon};
 use fern_obs::error::Result;
+use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
 /// fern-obs - OBS WebSocket bridge for Fern Shell
 ///
@@ -119,6 +120,21 @@ enum Commands {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    // Initialize tracing subscriber with env filter
+    // Default to "info" level, can be overridden with RUST_LOG env var
+    // e.g., RUST_LOG=debug or RUST_LOG=fern_obs=trace
+    tracing_subscriber::registry()
+        .with(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")))
+        .with(
+            fmt::layer()
+                .with_target(false)
+                .with_thread_ids(false)
+                .with_file(false)
+                .with_line_number(false)
+                .compact(),
+        )
+        .init();
+
     let cli = Cli::parse();
 
     let base_config = ObsConfig {
