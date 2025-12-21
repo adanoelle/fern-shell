@@ -14,6 +14,11 @@ Item {
     // Expose drawer container for input region calculation
     readonly property alias drawerContainer: drawerContainer
 
+    // Cleanup on destruction
+    Component.onDestruction: {
+        clockTimer.stop();
+    }
+
     // Drawer area fills screen minus border thickness and bar width
     anchors.fill: parent
     anchors.margins: Config.Theme.borderThickness
@@ -91,14 +96,16 @@ Item {
                         const hour12 = hours % 12 || 12;
                         return `${hour12}:${mins} ${ampm}`;
                     }
+                }
 
-                    Timer {
-                        interval: 1000
-                        running: clockPopout.isVisible
-                        repeat: true
-                        triggeredOnStart: true
-                        onTriggered: timeDisplay.text = timeDisplay.formatTime()
-                    }
+                // Timer moved outside Text for cleaner structure
+                Timer {
+                    id: clockTimer
+                    interval: 1000
+                    running: clockPopout.isVisible
+                    repeat: true
+                    triggeredOnStart: true
+                    onTriggered: timeDisplay.text = timeDisplay.formatTime()
                 }
 
                 // Separator
