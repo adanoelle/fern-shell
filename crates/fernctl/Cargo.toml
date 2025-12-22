@@ -1,0 +1,74 @@
+[package]
+name = "fernctl"
+description = """
+Control plane for Fern Shell.
+
+fernctl provides both CLI and TUI interfaces for managing Fern Shell services,
+viewing logs, and controlling configuration. It monitors state files, orchestrates
+service daemons, and provides a unified dashboard for shell management.
+"""
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+keywords = ["fern-shell", "control-plane", "tui", "cli", "wayland"]
+categories = ["command-line-utilities", "gui"]
+
+[features]
+default = ["cli", "tui"]
+cli = ["dep:clap"]
+tui = ["dep:ratatui", "dep:crossterm"]
+
+[dependencies]
+# Internal crates
+fern-core = { workspace = true }
+fern-theme = { workspace = true }
+
+# === Error Handling ===
+thiserror = { workspace = true }
+miette = { workspace = true }
+
+# === Serialization ===
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml_edit = { workspace = true }
+
+# === CLI ===
+clap = { workspace = true, optional = true }
+
+# === TUI ===
+ratatui = { workspace = true, optional = true }
+crossterm = { workspace = true, optional = true }
+
+# === Async Runtime ===
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "fs", "sync", "signal", "time"] }
+
+# === File Watching ===
+notify = { workspace = true }
+notify-debouncer-mini = { workspace = true }
+
+# === Process Control ===
+nix = { version = "0.29", features = ["signal", "process"] }
+
+# === Time ===
+chrono = { version = "0.4", features = ["serde"] }
+
+# === Utilities ===
+dirs = { workspace = true }
+
+# === Logging ===
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+[[bin]]
+name = "fernctl"
+path = "src/main.rs"
+required-features = ["cli"]
+
+[lints]
+workspace = true

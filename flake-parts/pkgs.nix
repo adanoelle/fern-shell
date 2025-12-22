@@ -70,8 +70,28 @@
         };
       };
 
-      # Alias for backwards compatibility during transition
-      fernctl = fernTheme;
+      # Control plane CLI + TUI for managing Fern Shell
+      # Built from the Cargo workspace
+      fernctl = pkgs.rustPlatform.buildRustPackage {
+        pname = "fernctl";
+        version = "0.1.0";
+        src = self;
+        cargoLock.lockFile = "${self}/Cargo.lock";
+
+        # Build only the fernctl package from the workspace
+        buildAndTestSubdir = "crates/fernctl";
+
+        # Build with CLI and TUI features
+        buildFeatures = [ "cli" "tui" ];
+
+        meta = with lib; {
+          description = "Control plane for Fern Shell (CLI + TUI dashboard)";
+          homepage = "https://github.com/adanoelle/fern-shell";
+          license = licenses.mit;
+          maintainers = [ ];
+          mainProgram = "fernctl";
+        };
+      };
     in
     {
       packages = {
@@ -87,7 +107,6 @@
     fern-shell = self.packages.${final.stdenv.hostPlatform.system}.fern-shell;
     fern-theme = self.packages.${final.stdenv.hostPlatform.system}.fern-theme;
     fern-obs = self.packages.${final.stdenv.hostPlatform.system}.fern-obs;
-    # Backwards compatibility alias
-    fernctl = self.packages.${final.stdenv.hostPlatform.system}.fern-theme;
+    fernctl = self.packages.${final.stdenv.hostPlatform.system}.fernctl;
   };
 }

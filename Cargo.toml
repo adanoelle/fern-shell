@@ -15,9 +15,7 @@ members = [
     "crates/fern-core",
     "crates/fern-theme",
     "crates/fern-obs",
-    # Future crates:
-    # "crates/fernctl",
-    # "crates/fernctl-tui",
+    "crates/fernctl",
 ]
 
 [workspace.package]
@@ -31,6 +29,7 @@ authors = ["Fern Shell Contributors"]
 [workspace.dependencies]
 # Internal crates
 fern-core = { path = "crates/fern-core" }
+fern-theme = { path = "crates/fern-theme" }
 
 # === Error Handling ===
 thiserror = "2.0"
@@ -40,6 +39,7 @@ miette = { version = "7.2", default-features = false, features = ["derive"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 toml = "0.8"
+toml_edit = "0.22"
 
 # === CLI ===
 clap = { version = "4.5", features = ["derive", "env", "wrap_help"] }
