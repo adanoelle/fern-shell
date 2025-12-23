@@ -8,11 +8,13 @@
 #   - fern-obs: Rust daemon for OBS WebSocket integration
 #   - fern-core: Shared library (built as part of fern-theme and fern-obs)
 #
-{ self, lib, ... }:
+{ self, lib, inputs, ... }:
 
 {
   perSystem = { system, pkgs, ... }:
     let
+      # Re-export quickshell for users
+      quickshell = inputs.quickshell.packages.${system}.default;
       # QML panel files
       fernShell = pkgs.stdenv.mkDerivation {
         pname   = "fern-shell";
@@ -95,7 +97,7 @@
     in
     {
       packages = {
-        inherit fernShell fernTheme fernObs fernctl;
+        inherit fernShell fernTheme fernObs fernctl quickshell;
         fern-shell = fernShell;
         fern-theme = fernTheme;
         fern-obs = fernObs;
