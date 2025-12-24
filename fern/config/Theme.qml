@@ -167,8 +167,9 @@ QtObject {
     readonly property int borderRounding: config.border?.rounding ?? 6
 
     // -- Gaps (Hyprland window gaps, controlled by Fern) --
-    readonly property int gapsIn: config.gaps?.inner ?? 5
-    readonly property int gapsOut: config.gaps?.outer ?? 5
+    // Note: defaults should match Hyprland config since exclusive zone is set at window creation
+    readonly property int gapsIn: config.gaps?.inner ?? 6
+    readonly property int gapsOut: config.gaps?.outer ?? 12
 
     // -- Module (generic container) --
     readonly property int moduleRadius: radius.md

@@ -14,9 +14,19 @@ ShellRoot {
     // Force ConfigLoader to initialize (singletons are lazy-loaded)
     property var _configLoader: Config.ConfigLoader
 
-    // Create shell for each screen
-    Variants {
-        model: Quickshell.screens
+    // Wait for config to load before creating windows
+    // This ensures exclusive zone uses correct values from config
+    Loader {
+        active: Config.ConfigLoader.loaded
+        sourceComponent: shellComponent
+    }
+
+    Component {
+        id: shellComponent
+
+        // Create shell for each screen
+        Variants {
+            model: Quickshell.screens
 
         // Container for both windows per screen
         Scope {
@@ -111,9 +121,9 @@ ShellRoot {
                     bottom: true
                 }
 
-                // Exclusive zone accounts for bar width minus outer gap
-                // This makes the gap between bar and windows equal to gaps between windows
-                exclusiveZone: Config.Theme.barWidth - Config.Theme.gapsOut
+                // Exclusive zone = bar width; Hyprland adds gapsOut to windows
+                // Result: gap between bar and windows equals gaps between windows
+                exclusiveZone: Config.Theme.barWidth
 
                 WlrLayershell.namespace: "fern-exclusion"
 
@@ -123,7 +133,8 @@ ShellRoot {
                 visible: true
             }
         }
-    }
+        }  // Variants
+    }  // Component
 
     // React to theme changes
     Connections {
