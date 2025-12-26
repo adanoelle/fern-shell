@@ -4,10 +4,14 @@
 #
 # ## Crate Overview
 #
-# - `fern-core`  - Shared types, traits, and utilities
-# - `fern-theme` - Theme and configuration management (formerly fernctl)
-# - `fern-obs`   - OBS WebSocket bridge (planned)
-# - `fernctl`    - Control plane and orchestrator (planned)
+# - `fern-core`     - Shared types, traits, and utilities
+# - `fern-theme`    - Theme and configuration management (formerly fernctl)
+# - `fern-obs`      - OBS WebSocket bridge (planned)
+# - `fernctl`       - Control plane and orchestrator (planned)
+# - `frond`         - Elm Architecture runtime for Rust TUIs
+# - `fern-calendar` - Calendar domain (events, schedules)
+# - `fern-planner`  - Planner domain (goals, intentions)
+# - `fern-planner-tui` - Planner TUI application
 
 [workspace]
 resolver = "2"
@@ -16,6 +20,10 @@ members = [
     "crates/fern-theme",
     "crates/fern-obs",
     "crates/fernctl",
+    "crates/frond",
+    "crates/fern-calendar",
+    "crates/fern-planner",
+    "crates/fern-planner-tui",
 ]
 
 [workspace.package]
@@ -30,6 +38,9 @@ authors = ["Fern Shell Contributors"]
 # Internal crates
 fern-core = { path = "crates/fern-core" }
 fern-theme = { path = "crates/fern-theme" }
+frond = { path = "crates/frond" }
+fern-calendar = { path = "crates/fern-calendar" }
+fern-planner = { path = "crates/fern-planner" }
 
 # === Error Handling ===
 thiserror = "2.0"
@@ -51,6 +62,16 @@ notify-debouncer-mini = "0.4"
 # === Async Runtime ===
 tokio = { version = "1.37", features = ["rt-multi-thread", "macros", "fs", "sync", "signal", "time"] }
 async-trait = "0.1"
+futures = "0.3"
+
+# === Database ===
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+# === Date/Time ===
+chrono = { version = "0.4", features = ["serde"] }
+
+# === IDs ===
+uuid = { version = "1.0", features = ["v4", "serde"] }
 
 # === IPC ===
 zbus = "4.4"
