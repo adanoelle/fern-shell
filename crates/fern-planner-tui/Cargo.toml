@@ -1,0 +1,39 @@
+[package]
+name = "fern-planner-tui"
+description = "Planner TUI application for Fern Shell"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "fern-planner"
+path = "src/main.rs"
+
+[features]
+default = []
+
+[dependencies]
+# Internal crates
+frond.workspace = true
+fern-calendar.workspace = true
+fern-planner.workspace = true
+fern-core.workspace = true
+
+# Date/Time
+chrono.workspace = true
+
+# Async
+tokio.workspace = true
+
+# Error handling
+thiserror.workspace = true
+miette.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true
