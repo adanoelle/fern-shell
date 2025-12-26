@@ -1,0 +1,30 @@
+[package]
+name = "frond"
+description = "Full Elm Architecture runtime for Rust TUIs"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[features]
+default = []
+
+[dependencies]
+# TUI
+ratatui.workspace = true
+crossterm.workspace = true
+
+# Async
+tokio.workspace = true
+futures.workspace = true
+
+# Error handling
+thiserror.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true
