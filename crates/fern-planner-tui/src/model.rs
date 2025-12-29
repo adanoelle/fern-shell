@@ -1,10 +1,36 @@
 //! Application model - the single source of truth for state.
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use chrono::{Datelike, Local, NaiveDate, Timelike};
+use fern_calendar::{EventRepository, SqliteEventRepository};
+use uuid::Uuid;
 
 use crate::data::MonthData;
+
+/// Convert 24-hour format to 12-hour format with AM/PM.
+/// Returns (hour_12, is_am) where hour_12 is 1-12.
+fn hour24_to_12(hour24: u8) -> (u8, bool) {
+    match hour24 {
+        0 => (12, true),        // Midnight
+        1..=11 => (hour24, true), // AM
+        12 => (12, false),       // Noon
+        13..=23 => (hour24 - 12, false), // PM
+        _ => (12, true),         // Fallback
+    }
+}
+
+/// Convert 12-hour format with AM/PM to 24-hour format.
+/// hour12 should be 1-12.
+fn hour12_to_24(hour12: u8, is_am: bool) -> u8 {
+    match (hour12, is_am) {
+        (12, true) => 0,           // 12 AM = midnight
+        (12, false) => 12,         // 12 PM = noon
+        (h, true) => h,            // AM hours 1-11
+        (h, false) => h + 12,      // PM hours 1-11 -> 13-23
+    }
+}
 
 /// The current view mode of the planner.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -33,6 +59,28 @@ pub enum MonthPane {
     Days,
     /// The details pane (right pane)
     Details,
+}
+
+/// Which pane is focused in day view.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum DayPane {
+    /// The timeline pane (left)
+    #[default]
+    Timeline,
+    /// The details pane (right)
+    Details,
+}
+
+/// Which pane is focused in week view.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum WeekPane {
+    /// The grid pane (left) - hours x days
+    #[default]
+    Grid,
+    /// The details pane (right)
+    Details,
+    /// The notes pane (bottom)
+    Notes,
 }
 
 /// Which section is focused in the details pane.
@@ -89,6 +137,12 @@ pub enum InputMode {
     EditingIntention,
     /// Editing an existing event
     EditingEvent,
+    /// Adding a new week note
+    AddingWeekNote,
+    /// Editing an existing week note
+    EditingWeekNote,
+    /// Viewing a week note in full (popup)
+    ViewingWeekNote,
 }
 
 /// Menu action options in the context menu.
@@ -126,7 +180,10 @@ pub enum EventFormField {
     #[default]
     Title,
     AllDay,
-    Time,
+    StartTime,
+    StartAmPm,
+    EndTime,
+    EndAmPm,
     Description,
 }
 
@@ -162,6 +219,24 @@ pub struct PlannerModel {
     pub selected_intention_idx: usize,
     /// Cached month data by (year, month)
     pub month_data: HashMap<(i32, u32), MonthData>,
+    /// Event repository for database persistence
+    pub event_repo: Arc<SqliteEventRepository>,
+
+    // === Day View State ===
+    /// Which pane is focused in day view
+    pub day_pane: DayPane,
+    /// Currently selected hour in timeline (0-23)
+    pub selected_hour: u8,
+    /// Top visible hour in timeline scroll (0-23)
+    pub timeline_scroll: u8,
+
+    // === Week View State ===
+    /// Which pane is focused in week view
+    pub week_pane: WeekPane,
+    /// Selected day of week in grid (0=Mon, 6=Sun)
+    pub week_selected_day: u8,
+    /// Selected hour in week grid (0-23)
+    pub week_selected_hour: u8,
 
     // === Input State ===
     /// Current input mode (normal or popup)
@@ -170,8 +245,12 @@ pub struct PlannerModel {
     pub input_buffer: String,
     /// Current menu action selection
     pub menu_action: MenuAction,
-    /// ID of item being edited (for edit/delete operations)
-    pub editing_item_id: Option<u64>,
+    /// ID of event being edited (for edit/delete operations)
+    pub editing_event_id: Option<Uuid>,
+    /// ID of goal being edited
+    pub editing_goal_id: Option<u64>,
+    /// ID of intention being edited
+    pub editing_intention_id: Option<u64>,
 
     // === Event Form State ===
     /// Current field in event form
@@ -180,14 +259,31 @@ pub struct PlannerModel {
     pub event_title: String,
     /// Event all-day toggle
     pub event_all_day: bool,
-    /// Event time input (HH:MM format)
-    pub event_time: String,
+    /// Event start time input (HHMM format, 12-hour)
+    pub event_start_time: String,
+    /// Event start time AM (true) or PM (false)
+    pub event_start_am: bool,
+    /// Event end time input (HHMM format, 12-hour)
+    pub event_end_time: String,
+    /// Event end time AM (true) or PM (false)
+    pub event_end_am: bool,
     /// Event description input
     pub event_description: String,
+
+    // === Week Notes State ===
+    /// Cached week notes by week start (Monday)
+    pub week_notes: HashMap<NaiveDate, Vec<crate::data::WeekNote>>,
+    /// Selected week note index
+    pub selected_week_note_idx: usize,
+    /// ID of week note being edited
+    pub editing_week_note_id: Option<Uuid>,
+    /// Scroll offset for week notes list
+    pub week_notes_scroll: usize,
 }
 
-impl Default for PlannerModel {
-    fn default() -> Self {
+impl PlannerModel {
+    /// Create a new model with the given event repository.
+    pub fn new(event_repo: Arc<SqliteEventRepository>) -> Self {
         let today = Local::now().date_naive();
         Self {
             selected_date: today,
@@ -202,26 +298,57 @@ impl Default for PlannerModel {
             selected_goal_idx: 0,
             selected_intention_idx: 0,
             month_data: HashMap::new(),
+            event_repo,
+            // Day view defaults
+            day_pane: DayPane::default(),
+            selected_hour: 8, // Start at 8am
+            timeline_scroll: 6, // Show from 6am
+            // Week view defaults
+            week_pane: WeekPane::default(),
+            week_selected_day: 0, // Monday
+            week_selected_hour: 9, // 9am
             input_mode: InputMode::default(),
             input_buffer: String::new(),
             menu_action: MenuAction::default(),
-            editing_item_id: None,
+            editing_event_id: None,
+            editing_goal_id: None,
+            editing_intention_id: None,
             // Event form defaults
             event_form_field: EventFormField::default(),
             event_title: String::new(),
             event_all_day: false,
-            event_time: String::new(),
+            event_start_time: String::new(),
+            event_start_am: true,
+            event_end_time: String::new(),
+            event_end_am: true,
             event_description: String::new(),
+            // Week notes defaults
+            week_notes: HashMap::new(),
+            selected_week_note_idx: 0,
+            editing_week_note_id: None,
+            week_notes_scroll: 0,
         }
+    }
+
+    /// Create a model with an in-memory database (for testing).
+    #[cfg(test)]
+    pub fn new_in_memory() -> Self {
+        let repo = SqliteEventRepository::in_memory()
+            .expect("Failed to create in-memory database");
+        Self::new(Arc::new(repo))
+    }
+}
+
+impl Default for PlannerModel {
+    /// Create a model with an in-memory database (for Default trait).
+    fn default() -> Self {
+        let repo = SqliteEventRepository::in_memory()
+            .expect("Failed to create in-memory database");
+        Self::new(Arc::new(repo))
     }
 }
 
 impl PlannerModel {
-    /// Create a new model with default values.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     // === Builder-style setters for immutable updates ===
 
     /// Set the selected date.
@@ -544,6 +671,76 @@ impl PlannerModel {
         self
     }
 
+    // === Day View Navigation ===
+
+    /// Reset day view state when entering day view.
+    #[must_use]
+    pub fn reset_day_state(mut self) -> Self {
+        self.day_pane = DayPane::Timeline;
+        self.details_focus = DetailsFocus::Events;
+        self.selected_event_idx = 0;
+        // Set selected hour to current hour
+        let current_hour = Local::now().hour() as u8;
+        self.selected_hour = current_hour;
+        // Scroll to show current hour near top (with some context)
+        self.timeline_scroll = current_hour.saturating_sub(2);
+        self.input_mode = InputMode::Normal;
+        self
+    }
+
+    /// Toggle between timeline and details panes in day view.
+    #[must_use]
+    pub fn toggle_day_pane(mut self) -> Self {
+        self.day_pane = match self.day_pane {
+            DayPane::Timeline => DayPane::Details,
+            DayPane::Details => DayPane::Timeline,
+        };
+        self
+    }
+
+    /// Set the day pane focus.
+    #[must_use]
+    pub fn with_day_pane(mut self, pane: DayPane) -> Self {
+        self.day_pane = pane;
+        self
+    }
+
+    /// Move to the next hour in the timeline.
+    #[must_use]
+    pub fn timeline_next_hour(mut self) -> Self {
+        if self.selected_hour < 23 {
+            self.selected_hour += 1;
+            // Auto-scroll if selection goes below visible area
+            // Assume ~12 visible hours
+            if self.selected_hour > self.timeline_scroll + 11 {
+                self.timeline_scroll = (self.selected_hour - 11).min(12);
+            }
+        }
+        self
+    }
+
+    /// Move to the previous hour in the timeline.
+    #[must_use]
+    pub fn timeline_prev_hour(mut self) -> Self {
+        if self.selected_hour > 0 {
+            self.selected_hour -= 1;
+            // Auto-scroll if selection goes above visible area
+            if self.selected_hour < self.timeline_scroll {
+                self.timeline_scroll = self.selected_hour;
+            }
+        }
+        self
+    }
+
+    /// Jump to the current hour.
+    #[must_use]
+    pub fn go_to_current_hour(mut self) -> Self {
+        let current_hour = Local::now().hour() as u8;
+        self.selected_hour = current_hour;
+        self.timeline_scroll = current_hour.saturating_sub(2);
+        self
+    }
+
     /// Set the selected event index.
     #[must_use]
     pub fn with_selected_event_idx(mut self, idx: usize) -> Self {
@@ -551,12 +748,286 @@ impl PlannerModel {
         self
     }
 
+    // === Week View Navigation ===
+
+    /// Reset week view state when entering week view.
+    #[must_use]
+    pub fn reset_week_state(mut self) -> Self {
+        self.week_pane = WeekPane::Grid;
+        self.details_focus = DetailsFocus::Events;
+        self.selected_event_idx = 0;
+        self.selected_week_note_idx = 0;
+        self.week_notes_scroll = 0;
+        // Set to current day of week (0=Mon, 6=Sun)
+        let weekday = self.selected_date.weekday().num_days_from_monday() as u8;
+        self.week_selected_day = weekday;
+        // Set to current hour or 9am
+        let current_hour = Local::now().hour() as u8;
+        self.week_selected_hour = if current_hour < 6 { 9 } else { current_hour };
+        self.input_mode = InputMode::Normal;
+        self
+    }
+
+    /// Toggle between grid, details, and notes panes in week view.
+    #[must_use]
+    pub fn toggle_week_pane(mut self) -> Self {
+        self.week_pane = match self.week_pane {
+            WeekPane::Grid => WeekPane::Details,
+            WeekPane::Details => WeekPane::Notes,
+            WeekPane::Notes => WeekPane::Grid,
+        };
+        self
+    }
+
+    /// Set the week pane focus.
+    #[must_use]
+    pub fn with_week_pane(mut self, pane: WeekPane) -> Self {
+        self.week_pane = pane;
+        self
+    }
+
+    /// Move to the next day in week grid (right).
+    #[must_use]
+    pub fn week_next_day(mut self) -> Self {
+        if self.week_selected_day < 6 {
+            self.week_selected_day += 1;
+        }
+        self
+    }
+
+    /// Move to the previous day in week grid (left).
+    #[must_use]
+    pub fn week_prev_day(mut self) -> Self {
+        if self.week_selected_day > 0 {
+            self.week_selected_day -= 1;
+        }
+        self
+    }
+
+    /// Move to the next hour in week grid (down).
+    #[must_use]
+    pub fn week_next_hour(mut self) -> Self {
+        if self.week_selected_hour < 23 {
+            self.week_selected_hour += 1;
+        }
+        self
+    }
+
+    /// Move to the previous hour in week grid (up).
+    #[must_use]
+    pub fn week_prev_hour(mut self) -> Self {
+        if self.week_selected_hour > 0 {
+            self.week_selected_hour -= 1;
+        }
+        self
+    }
+
+    /// Get the date for the selected day in the week view.
+    pub fn week_selected_date(&self) -> NaiveDate {
+        // Find the Monday of the week containing selected_date
+        let days_from_monday = self.selected_date.weekday().num_days_from_monday();
+        let monday = self.selected_date - chrono::Duration::days(days_from_monday as i64);
+        // Add the selected day offset
+        monday + chrono::Duration::days(self.week_selected_day as i64)
+    }
+
+    /// Get the Monday of the current week.
+    pub fn current_week_monday(&self) -> NaiveDate {
+        let days_from_monday = self.selected_date.weekday().num_days_from_monday();
+        self.selected_date - chrono::Duration::days(days_from_monday as i64)
+    }
+
+    /// Get or load week notes for the current week.
+    pub fn get_week_notes(&mut self) -> &Vec<crate::data::WeekNote> {
+        use crate::data::WeekNote;
+
+        let monday = self.current_week_monday();
+
+        if !self.week_notes.contains_key(&monday) {
+            let notes = match self.event_repo.get_week_notes(monday) {
+                Ok(notes) => notes.into_iter().map(WeekNote::from).collect(),
+                Err(e) => {
+                    eprintln!("Failed to load week notes: {}", e);
+                    Vec::new()
+                }
+            };
+            self.week_notes.insert(monday, notes);
+        }
+
+        self.week_notes.get(&monday).unwrap()
+    }
+
+    /// Get the number of week notes for the current week.
+    pub fn week_note_count(&self) -> usize {
+        let monday = self.current_week_monday();
+        self.week_notes.get(&monday).map(|n| n.len()).unwrap_or(0)
+    }
+
+    /// Navigate to next week note (with auto-scroll).
+    #[must_use]
+    pub fn next_week_note(mut self) -> Self {
+        let max = self.week_note_count().saturating_sub(1);
+        self.selected_week_note_idx = self.selected_week_note_idx.saturating_add(1).min(max);
+        // Auto-scroll to keep selection visible (assume ~6 visible lines)
+        if self.selected_week_note_idx >= self.week_notes_scroll + 6 {
+            self.week_notes_scroll = self.selected_week_note_idx.saturating_sub(5);
+        }
+        self
+    }
+
+    /// Navigate to previous week note (with auto-scroll).
+    #[must_use]
+    pub fn prev_week_note(mut self) -> Self {
+        self.selected_week_note_idx = self.selected_week_note_idx.saturating_sub(1);
+        // Auto-scroll to keep selection visible
+        if self.selected_week_note_idx < self.week_notes_scroll {
+            self.week_notes_scroll = self.selected_week_note_idx;
+        }
+        self
+    }
+
+    /// View the selected week note in a popup.
+    #[must_use]
+    pub fn view_week_note(mut self) -> Self {
+        let monday = self.current_week_monday();
+        if let Some(notes) = self.week_notes.get(&monday) {
+            if notes.get(self.selected_week_note_idx).is_some() {
+                self.input_mode = InputMode::ViewingWeekNote;
+            }
+        }
+        self
+    }
+
+    /// Start adding a new week note.
+    #[must_use]
+    pub fn start_add_week_note(mut self) -> Self {
+        self.input_mode = InputMode::AddingWeekNote;
+        self.input_buffer.clear();
+        self
+    }
+
+    /// Start editing the selected week note.
+    #[must_use]
+    pub fn start_edit_week_note(mut self) -> Self {
+        let monday = self.current_week_monday();
+        if let Some(notes) = self.week_notes.get(&monday) {
+            if let Some(note) = notes.get(self.selected_week_note_idx) {
+                self.editing_week_note_id = Some(note.id);
+                self.input_buffer = note.text.clone();
+                self.input_mode = InputMode::EditingWeekNote;
+            }
+        }
+        self
+    }
+
+    /// Submit the week note (add or edit).
+    #[must_use]
+    pub fn submit_week_note(mut self) -> Self {
+        if self.input_buffer.trim().is_empty() {
+            return self.close_popup();
+        }
+
+        let monday = self.current_week_monday();
+
+        match self.input_mode {
+            InputMode::AddingWeekNote => {
+                // Get next position
+                let position = self.week_notes.get(&monday).map(|n| n.len()).unwrap_or(0) as u32;
+
+                // Create new note
+                let cal_note = fern_calendar::WeekNote::new(monday, self.input_buffer.trim(), position);
+
+                // Persist to database
+                if let Err(e) = self.event_repo.create_week_note(&cal_note) {
+                    eprintln!("Failed to create week note: {}", e);
+                }
+
+                // Add to cache
+                let note = crate::data::WeekNote::from(cal_note);
+                self.week_notes.entry(monday).or_default().push(note);
+
+                // Select the new note
+                self.selected_week_note_idx = self.week_note_count().saturating_sub(1);
+            }
+            InputMode::EditingWeekNote => {
+                if let Some(id) = self.editing_week_note_id {
+                    if let Some(notes) = self.week_notes.get_mut(&monday) {
+                        if let Some(note) = notes.iter_mut().find(|n| n.id == id) {
+                            note.text = self.input_buffer.trim().to_string();
+
+                            // Persist to database
+                            let cal_note: fern_calendar::WeekNote = (&*note).into();
+                            if let Err(e) = self.event_repo.update_week_note(&cal_note) {
+                                eprintln!("Failed to update week note: {}", e);
+                            }
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        self.close_popup()
+    }
+
+    /// Delete the selected week note.
+    #[must_use]
+    pub fn delete_week_note(mut self) -> Self {
+        let monday = self.current_week_monday();
+
+        if let Some(notes) = self.week_notes.get_mut(&monday) {
+            if self.selected_week_note_idx < notes.len() {
+                let note_id = notes[self.selected_week_note_idx].id;
+
+                // Delete from database
+                if let Err(e) = self.event_repo.delete_week_note(note_id) {
+                    eprintln!("Failed to delete week note: {}", e);
+                }
+
+                notes.remove(self.selected_week_note_idx);
+
+                // Adjust selection
+                if self.selected_week_note_idx > 0 && self.selected_week_note_idx >= notes.len() {
+                    self.selected_week_note_idx = notes.len().saturating_sub(1);
+                }
+            }
+        }
+
+        self.close_popup()
+    }
+
     /// Get or load month data for the current month.
+    /// Loads events from the database, goals and intentions are empty until persisted.
     pub fn get_month_data(&mut self, year: i32, month: u32) -> &MonthData {
-        use crate::data::sample_data;
-        self.month_data
-            .entry((year, month))
-            .or_insert_with(|| sample_data(year, month))
+        use crate::data::{Event, MonthData};
+        use std::collections::HashMap;
+
+        self.month_data.entry((year, month)).or_insert_with(|| {
+            // Load events from database
+            let events = match self.event_repo.get_by_month(year, month) {
+                Ok(events) => events,
+                Err(e) => {
+                    eprintln!("Failed to load events for {}/{}: {}", year, month, e);
+                    Vec::new()
+                }
+            };
+
+            // Group events by day
+            let mut events_by_day: HashMap<u32, Vec<Event>> = HashMap::new();
+            for event in events {
+                let day = event.date.day();
+                events_by_day
+                    .entry(day)
+                    .or_default()
+                    .push(Event::from(event));
+            }
+
+            MonthData {
+                events_by_day,
+                goals: Vec::new(),      // TODO: Load from database when implemented
+                intentions: Vec::new(), // TODO: Load from database when implemented
+            }
+        })
     }
 
     /// Get month data for the currently selected date's month.
@@ -700,9 +1171,33 @@ impl PlannerModel {
                 self.event_form_field = EventFormField::Title;
                 self.event_title.clear();
                 self.event_all_day = false;
-                self.event_time.clear();
                 self.event_description.clear();
-                self.editing_item_id = None;
+                self.editing_event_id = None;
+
+                // Pre-populate start time from selected hour if in timeline/grid pane
+                let prefill_hour = match self.view {
+                    View::Day if self.day_pane == DayPane::Timeline => Some(self.selected_hour),
+                    View::Week if self.week_pane == WeekPane::Grid => Some(self.week_selected_hour),
+                    _ => None,
+                };
+
+                if let Some(hour24) = prefill_hour {
+                    // Convert 24-hour to 12-hour format
+                    let (hour12, is_am) = hour24_to_12(hour24);
+                    self.event_start_time = format!("{:02}00", hour12);
+                    self.event_start_am = is_am;
+
+                    // Default end time to 1 hour later
+                    let end_hour24 = (hour24 + 1).min(23);
+                    let (end_hour12, end_is_am) = hour24_to_12(end_hour24);
+                    self.event_end_time = format!("{:02}00", end_hour12);
+                    self.event_end_am = end_is_am;
+                } else {
+                    self.event_start_time.clear();
+                    self.event_start_am = true;
+                    self.event_end_time.clear();
+                    self.event_end_am = true;
+                }
             }
         }
         self
@@ -719,7 +1214,7 @@ impl PlannerModel {
             DetailsFocus::Goals => {
                 if let Some(data) = self.month_data.get(&(year, month)) {
                     if let Some(goal) = data.goals.get(self.selected_goal_idx) {
-                        self.editing_item_id = Some(goal.id);
+                        self.editing_goal_id = Some(goal.id);
                         self.input_buffer = goal.title.clone();
                         self.input_mode = InputMode::EditingGoal;
                     }
@@ -728,7 +1223,7 @@ impl PlannerModel {
             DetailsFocus::Intention => {
                 if let Some(data) = self.month_data.get(&(year, month)) {
                     if let Some(intention) = data.intentions.get(self.selected_intention_idx) {
-                        self.editing_item_id = Some(intention.id);
+                        self.editing_intention_id = Some(intention.id);
                         self.input_buffer = intention.text.clone();
                         self.input_mode = InputMode::EditingIntention;
                     }
@@ -738,13 +1233,30 @@ impl PlannerModel {
                 if let Some(data) = self.month_data.get(&(year, month)) {
                     if let Some(events) = data.events_by_day.get(&day) {
                         if let Some(event) = events.get(self.selected_event_idx) {
-                            self.editing_item_id = Some(event.id);
+                            self.editing_event_id = Some(event.id);
                             self.event_title = event.title.clone();
-                            self.event_all_day = event.time.is_none();
-                            self.event_time = event
-                                .time
-                                .map(|t| format!("{:02}{:02}", t.hour(), t.minute()))
-                                .unwrap_or_default();
+                            self.event_all_day = event.start_time.is_none();
+
+                            // Convert start time to 12-hour format
+                            if let Some(t) = event.start_time {
+                                let (hour12, is_am) = hour24_to_12(t.hour() as u8);
+                                self.event_start_time = format!("{:02}{:02}", hour12, t.minute());
+                                self.event_start_am = is_am;
+                            } else {
+                                self.event_start_time.clear();
+                                self.event_start_am = true;
+                            }
+
+                            // Convert end time to 12-hour format
+                            if let Some(t) = event.end_time {
+                                let (hour12, is_am) = hour24_to_12(t.hour() as u8);
+                                self.event_end_time = format!("{:02}{:02}", hour12, t.minute());
+                                self.event_end_am = is_am;
+                            } else {
+                                self.event_end_time.clear();
+                                self.event_end_am = true;
+                            }
+
                             self.event_description =
                                 event.description.clone().unwrap_or_default();
                             self.event_form_field = EventFormField::Title;
@@ -790,6 +1302,14 @@ impl PlannerModel {
                 DetailsFocus::Events => {
                     if let Some(events) = data.events_by_day.get_mut(&day) {
                         if self.selected_event_idx < events.len() {
+                            // Get the event ID before removing
+                            let event_id = events[self.selected_event_idx].id;
+
+                            // Delete from database
+                            if let Err(e) = self.event_repo.delete(event_id) {
+                                eprintln!("Failed to delete event from database: {}", e);
+                            }
+
                             events.remove(self.selected_event_idx);
                             // Adjust selection
                             if self.selected_event_idx > 0
@@ -812,12 +1332,16 @@ impl PlannerModel {
         self.input_mode = InputMode::Normal;
         self.input_buffer.clear();
         self.menu_action = MenuAction::Add;
-        self.editing_item_id = None;
+        self.editing_event_id = None;
+        self.editing_goal_id = None;
+        self.editing_intention_id = None;
+        self.editing_week_note_id = None;
         // Also clear event form
         self.event_form_field = EventFormField::Title;
         self.event_title.clear();
         self.event_all_day = false;
-        self.event_time.clear();
+        self.event_start_time.clear();
+        self.event_end_time.clear();
         self.event_description.clear();
         self
     }
@@ -866,7 +1390,7 @@ impl PlannerModel {
                     self.selected_goal_idx = data.goals.len().saturating_sub(1);
                 }
                 InputMode::EditingGoal => {
-                    if let Some(id) = self.editing_item_id {
+                    if let Some(id) = self.editing_goal_id {
                         if let Some(goal) = data.goals.iter_mut().find(|g| g.id == id) {
                             goal.title = self.input_buffer.trim().to_string();
                         }
@@ -882,13 +1406,20 @@ impl PlannerModel {
                     self.selected_intention_idx = data.intentions.len().saturating_sub(1);
                 }
                 InputMode::EditingIntention => {
-                    if let Some(id) = self.editing_item_id {
+                    if let Some(id) = self.editing_intention_id {
                         if let Some(intention) = data.intentions.iter_mut().find(|i| i.id == id) {
                             intention.text = self.input_buffer.trim().to_string();
                         }
                     }
                 }
-                InputMode::Normal | InputMode::ContextMenu | InputMode::ConfirmDelete | InputMode::AddingEvent | InputMode::EditingEvent => {}
+                InputMode::Normal
+                | InputMode::ContextMenu
+                | InputMode::ConfirmDelete
+                | InputMode::AddingEvent
+                | InputMode::EditingEvent
+                | InputMode::AddingWeekNote
+                | InputMode::EditingWeekNote
+                | InputMode::ViewingWeekNote => {}
             }
         }
 
@@ -904,12 +1435,15 @@ impl PlannerModel {
             EventFormField::Title => EventFormField::AllDay,
             EventFormField::AllDay => {
                 if self.event_all_day {
-                    EventFormField::Description // Skip time if all-day
+                    EventFormField::Description // Skip times if all-day
                 } else {
-                    EventFormField::Time
+                    EventFormField::StartTime
                 }
             }
-            EventFormField::Time => EventFormField::Description,
+            EventFormField::StartTime => EventFormField::StartAmPm,
+            EventFormField::StartAmPm => EventFormField::EndTime,
+            EventFormField::EndTime => EventFormField::EndAmPm,
+            EventFormField::EndAmPm => EventFormField::Description,
             EventFormField::Description => EventFormField::Title, // Wrap around
         };
         self
@@ -921,12 +1455,15 @@ impl PlannerModel {
         self.event_form_field = match self.event_form_field {
             EventFormField::Title => EventFormField::Description, // Wrap around
             EventFormField::AllDay => EventFormField::Title,
-            EventFormField::Time => EventFormField::AllDay,
+            EventFormField::StartTime => EventFormField::AllDay,
+            EventFormField::StartAmPm => EventFormField::StartTime,
+            EventFormField::EndTime => EventFormField::StartAmPm,
+            EventFormField::EndAmPm => EventFormField::EndTime,
             EventFormField::Description => {
                 if self.event_all_day {
-                    EventFormField::AllDay // Skip time if all-day
+                    EventFormField::AllDay // Skip times if all-day
                 } else {
-                    EventFormField::Time
+                    EventFormField::EndAmPm
                 }
             }
         };
@@ -938,8 +1475,24 @@ impl PlannerModel {
     pub fn toggle_all_day(mut self) -> Self {
         self.event_all_day = !self.event_all_day;
         if self.event_all_day {
-            self.event_time.clear(); // Clear time when switching to all-day
+            // Clear times when switching to all-day
+            self.event_start_time.clear();
+            self.event_end_time.clear();
         }
+        self
+    }
+
+    /// Toggle start time AM/PM.
+    #[must_use]
+    pub fn toggle_start_am_pm(mut self) -> Self {
+        self.event_start_am = !self.event_start_am;
+        self
+    }
+
+    /// Toggle end time AM/PM.
+    #[must_use]
+    pub fn toggle_end_am_pm(mut self) -> Self {
+        self.event_end_am = !self.event_end_am;
         self
     }
 
@@ -948,14 +1501,30 @@ impl PlannerModel {
     pub fn push_event_char(mut self, c: char) -> Self {
         match self.event_form_field {
             EventFormField::Title => self.event_title.push(c),
-            EventFormField::Time => {
+            EventFormField::StartTime => {
                 // Only allow digits, max 4 chars (HHMM format)
-                if c.is_ascii_digit() && self.event_time.len() < 4 {
-                    self.event_time.push(c);
+                // If field is full, clear and start fresh (allows quick replacement)
+                if c.is_ascii_digit() {
+                    if self.event_start_time.len() >= 4 {
+                        self.event_start_time.clear();
+                    }
+                    self.event_start_time.push(c);
+                }
+            }
+            EventFormField::EndTime => {
+                // Only allow digits, max 4 chars (HHMM format)
+                // If field is full, clear and start fresh (allows quick replacement)
+                if c.is_ascii_digit() {
+                    if self.event_end_time.len() >= 4 {
+                        self.event_end_time.clear();
+                    }
+                    self.event_end_time.push(c);
                 }
             }
             EventFormField::Description => self.event_description.push(c),
-            EventFormField::AllDay => {} // Toggle handles this
+            EventFormField::AllDay | EventFormField::StartAmPm | EventFormField::EndAmPm => {
+                // Toggle fields - Space handles these
+            }
         }
         self
     }
@@ -967,13 +1536,18 @@ impl PlannerModel {
             EventFormField::Title => {
                 self.event_title.pop();
             }
-            EventFormField::Time => {
-                self.event_time.pop();
+            EventFormField::StartTime => {
+                self.event_start_time.pop();
+            }
+            EventFormField::EndTime => {
+                self.event_end_time.pop();
             }
             EventFormField::Description => {
                 self.event_description.pop();
             }
-            EventFormField::AllDay => {} // Toggle handles this
+            EventFormField::AllDay | EventFormField::StartAmPm | EventFormField::EndAmPm => {
+                // Toggle fields - no character input
+            }
         }
         self
     }
@@ -981,26 +1555,48 @@ impl PlannerModel {
     /// Submit the event form and create or update the event.
     #[must_use]
     pub fn submit_event(mut self) -> Self {
+        use crate::data::MonthData;
+
         // Title is required
         if self.event_title.trim().is_empty() {
             return self; // Don't submit without title
         }
 
-        let year = self.selected_date.year();
-        let month = self.selected_date.month();
-        let day = self.selected_date.day();
+        // Determine the target date based on the current view
+        // In Week view, use the grid-selected date; otherwise use selected_date
+        let target_date = if self.view == View::Week {
+            self.week_selected_date()
+        } else {
+            self.selected_date
+        };
+
+        let year = target_date.year();
+        let month = target_date.month();
+        let day = target_date.day();
 
         // Ensure month data exists
         if !self.month_data.contains_key(&(year, month)) {
-            self.month_data
-                .insert((year, month), crate::data::sample_data(year, month));
+            self.month_data.insert(
+                (year, month),
+                MonthData {
+                    events_by_day: HashMap::new(),
+                    goals: Vec::new(),
+                    intentions: Vec::new(),
+                },
+            );
         }
 
-        // Parse time if not all-day
-        let time = if self.event_all_day {
+        // Parse times if not all-day (convert from 12-hour with AM/PM to 24-hour)
+        let start_time = if self.event_all_day {
             None
         } else {
-            parse_time(&self.event_time)
+            parse_time_12h(&self.event_start_time, self.event_start_am)
+        };
+
+        let end_time = if self.event_all_day {
+            None
+        } else {
+            parse_time_12h(&self.event_end_time, self.event_end_am)
         };
 
         let is_editing = self.input_mode == InputMode::EditingEvent;
@@ -1008,7 +1604,7 @@ impl PlannerModel {
         if let Some(data) = self.month_data.get_mut(&(year, month)) {
             if is_editing {
                 // Update existing event
-                if let Some(id) = self.editing_item_id {
+                if let Some(id) = self.editing_event_id {
                     if let Some(events) = data.events_by_day.get_mut(&day) {
                         if let Some(event) = events.iter_mut().find(|e| e.id == id) {
                             event.title = self.event_title.trim().to_string();
@@ -1017,21 +1613,22 @@ impl PlannerModel {
                             } else {
                                 Some(self.event_description.trim().to_string())
                             };
-                            event.time = time;
+                            event.start_time = start_time;
+                            event.end_time = end_time;
+
+                            // Persist to database
+                            let cal_event: fern_calendar::Event = (&*event).into();
+                            if let Err(e) = self.event_repo.update(&cal_event) {
+                                eprintln!("Failed to update event in database: {}", e);
+                            }
                         }
-                        // Re-sort events by time
-                        events.sort_by_key(|e| e.time);
+                        // Re-sort events by start time
+                        events.sort_by_key(|e| e.start_time);
                     }
                 }
             } else {
-                // Generate new ID for new event
-                let new_id = data
-                    .events_by_day
-                    .values()
-                    .flat_map(|events| events.iter().map(|e| e.id))
-                    .max()
-                    .unwrap_or(0)
-                    + 1;
+                // Generate new UUID for new event
+                let new_id = Uuid::new_v4();
 
                 let event = crate::data::Event {
                     id: new_id,
@@ -1041,16 +1638,23 @@ impl PlannerModel {
                     } else {
                         Some(self.event_description.trim().to_string())
                     },
-                    time,
-                    date: self.selected_date,
+                    start_time,
+                    end_time,
+                    date: target_date,
                 };
+
+                // Persist to database
+                let cal_event: fern_calendar::Event = (&event).into();
+                if let Err(e) = self.event_repo.create(&cal_event) {
+                    eprintln!("Failed to create event in database: {}", e);
+                }
 
                 // Add to the appropriate day
                 data.events_by_day.entry(day).or_default().push(event);
 
-                // Sort events for the day by time
+                // Sort events for the day by start time
                 if let Some(events) = data.events_by_day.get_mut(&day) {
-                    events.sort_by_key(|e| e.time);
+                    events.sort_by_key(|e| e.start_time);
                 }
 
                 // Select the new event
@@ -1062,19 +1666,25 @@ impl PlannerModel {
     }
 }
 
-/// Parse a time string in HHMM format (4 digits).
-fn parse_time(s: &str) -> Option<chrono::NaiveTime> {
+/// Parse a time string in HHMM format (12-hour) with AM/PM flag.
+/// Returns NaiveTime in 24-hour format.
+fn parse_time_12h(s: &str, is_am: bool) -> Option<chrono::NaiveTime> {
     let s = s.trim();
     if s.is_empty() || s.len() != 4 {
         return None;
     }
-    // Parse HHMM format (e.g., "1430" → 14:30)
-    let hours: u32 = s[0..2].parse().ok()?;
+    // Parse HHMM format in 12-hour (e.g., "0930" + AM → 09:30, "0930" + PM → 21:30)
+    let hour12: u8 = s[0..2].parse().ok()?;
     let minutes: u32 = s[2..4].parse().ok()?;
-    if hours < 24 && minutes < 60 {
-        return chrono::NaiveTime::from_hms_opt(hours, minutes, 0);
+
+    // Validate 12-hour format: hour should be 01-12
+    if hour12 < 1 || hour12 > 12 || minutes >= 60 {
+        return None;
     }
-    None
+
+    // Convert to 24-hour format
+    let hour24 = hour12_to_24(hour12, is_am);
+    chrono::NaiveTime::from_hms_opt(hour24 as u32, minutes, 0)
 }
 
 /// Get the number of days in a month.

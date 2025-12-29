@@ -25,6 +25,9 @@ fern-core.workspace = true
 # Date/Time
 chrono.workspace = true
 
+# Identifiers
+uuid.workspace = true
+
 # Async
 tokio.workspace = true
 

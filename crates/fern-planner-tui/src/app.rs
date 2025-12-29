@@ -1,9 +1,13 @@
 //! Application trait implementation for the planner.
 
+use std::sync::Arc;
+
 use chrono::Datelike;
+use fern_calendar::SqliteEventRepository;
+use fern_core::FernPaths;
 use frond::prelude::*;
 
-use crate::model::{EventFormField, InputMode, MonthPane, PlannerModel, View};
+use crate::model::{DayPane, EventFormField, InputMode, MonthPane, PlannerModel, View, WeekPane};
 use crate::msg::Msg;
 use crate::view;
 
@@ -15,7 +19,28 @@ impl Application for PlannerApp {
     type Msg = Msg;
 
     fn init() -> (Self::Model, Cmd<Self::Msg>) {
-        (PlannerModel::new(), Cmd::none())
+        // Set up database path and create repository
+        let paths = FernPaths::new();
+
+        // Ensure directories exist
+        if let Err(e) = paths.ensure_dirs() {
+            eprintln!("Warning: Failed to create data directories: {}", e);
+        }
+
+        let db_path = paths.planner_db();
+        let repo = match SqliteEventRepository::open(&db_path) {
+            Ok(repo) => Arc::new(repo),
+            Err(e) => {
+                eprintln!("Warning: Failed to open database at {:?}: {}", db_path, e);
+                eprintln!("Using in-memory database as fallback");
+                Arc::new(
+                    SqliteEventRepository::in_memory()
+                        .expect("Failed to create in-memory database"),
+                )
+            }
+        };
+
+        (PlannerModel::new(repo), Cmd::none())
     }
 
     fn update(mut model: Self::Model, msg: Self::Msg) -> (Self::Model, Cmd<Self::Msg>) {
@@ -92,6 +117,28 @@ impl Application for PlannerApp {
             Msg::PrevSection => model.clear_count().prev_section(),
             Msg::SetDetailsFocus(focus) => model.clear_count().with_details_focus(focus),
 
+            // Day view navigation
+            Msg::ToggleDayPane => model.clear_count().toggle_day_pane(),
+            Msg::SetDayPane(pane) => model.clear_count().with_day_pane(pane),
+            Msg::TimelineUp => model.clear_count().timeline_prev_hour(),
+            Msg::TimelineDown => model.clear_count().timeline_next_hour(),
+            Msg::GoToCurrentHour => model.clear_count().go_to_current_hour(),
+
+            // Week view navigation
+            Msg::ToggleWeekPane => model.clear_count().toggle_week_pane(),
+            Msg::SetWeekPane(pane) => model.clear_count().with_week_pane(pane),
+            Msg::WeekGridUp => model.clear_count().week_prev_hour(),
+            Msg::WeekGridDown => model.clear_count().week_next_hour(),
+            Msg::WeekGridLeft => model.clear_count().week_prev_day(),
+            Msg::WeekGridRight => model.clear_count().week_next_day(),
+            Msg::NextWeekNote => model.clear_count().next_week_note(),
+            Msg::PrevWeekNote => model.clear_count().prev_week_note(),
+            Msg::AddWeekNote => model.clear_count().start_add_week_note(),
+            Msg::EditWeekNote => model.clear_count().start_edit_week_note(),
+            Msg::DeleteWeekNote => model.clear_count().delete_week_note(),
+            Msg::SubmitWeekNote => model.submit_week_note(),
+            Msg::ViewWeekNote => model.clear_count().view_week_note(),
+
             // Popup / Input
             Msg::OpenPopup => model.open_popup(),
             Msg::ClosePopup => model.close_popup(),
@@ -109,6 +156,8 @@ impl Application for PlannerApp {
             Msg::EventFormNextField => model.event_form_next_field(),
             Msg::EventFormPrevField => model.event_form_prev_field(),
             Msg::ToggleAllDay => model.toggle_all_day(),
+            Msg::ToggleStartAmPm => model.toggle_start_am_pm(),
+            Msg::ToggleEndAmPm => model.toggle_end_am_pm(),
             Msg::EventInputChar(c) => model.push_event_char(c),
             Msg::EventInputBackspace => model.pop_event_char(),
             Msg::SubmitEvent => model.submit_event(),
@@ -133,6 +182,8 @@ impl Application for PlannerApp {
         // View-specific key handling
         let view = model.view;
         let month_pane = model.month_pane;
+        let day_pane = model.day_pane;
+        let week_pane = model.week_pane;
         let input_mode = model.input_mode;
         let event_form_field = model.event_form_field;
 
@@ -169,9 +220,15 @@ impl Application for PlannerApp {
                         Tab => Some(Msg::EventFormNextField),
                         BackTab => Some(Msg::EventFormPrevField), // Shift+Tab
                         Backspace => Some(Msg::EventInputBackspace),
-                        // Space toggles all-day when on that field
+                        // Space toggles checkboxes on toggle fields
                         Char(' ') if event_form_field == EventFormField::AllDay => {
                             Some(Msg::ToggleAllDay)
+                        }
+                        Char(' ') if event_form_field == EventFormField::StartAmPm => {
+                            Some(Msg::ToggleStartAmPm)
+                        }
+                        Char(' ') if event_form_field == EventFormField::EndAmPm => {
+                            Some(Msg::ToggleEndAmPm)
                         }
                         Char(c) => Some(Msg::EventInputChar(c)),
                         _ => None,
@@ -186,6 +243,27 @@ impl Application for PlannerApp {
                         Enter => Some(Msg::SubmitInput),
                         Backspace => Some(Msg::InputBackspace),
                         Char(c) => Some(Msg::InputChar(c)),
+                        _ => None,
+                    };
+                }
+
+                // Handle week note input modes
+                if matches!(input_mode, InputMode::AddingWeekNote | InputMode::EditingWeekNote) {
+                    return match key.code {
+                        Esc => Some(Msg::ClosePopup),
+                        Enter => Some(Msg::SubmitWeekNote),
+                        Backspace => Some(Msg::InputBackspace),
+                        Char(c) => Some(Msg::InputChar(c)),
+                        _ => None,
+                    };
+                }
+
+                // Handle viewing week note popup
+                if input_mode == InputMode::ViewingWeekNote {
+                    return match key.code {
+                        Esc => Some(Msg::ClosePopup),
+                        Char('e') => Some(Msg::EditWeekNote),
+                        Char('d') => Some(Msg::DeleteWeekNote),
                         _ => None,
                     };
                 }
@@ -285,18 +363,132 @@ impl Application for PlannerApp {
                         }
                     }
 
-                    View::Week | View::Day => match key.code {
-                        Esc => Some(Msg::DrillUp),
+                    View::Week => {
+                        // Week view navigation depends on which pane is focused
+                        match week_pane {
+                            WeekPane::Grid => match key.code {
+                                Esc => Some(Msg::DrillUp), // Back to month view
 
-                        // Basic navigation
-                        Char('j') | Down => Some(Msg::NextDay),
-                        Char('k') | Up => Some(Msg::PrevDay),
-                        Char('l') | Right => Some(Msg::NextMonth),
-                        Char('h') | Left => Some(Msg::PrevMonth),
+                                // Navigation within grid
+                                Char('j') | Down => Some(Msg::WeekGridDown),
+                                Char('k') | Up => Some(Msg::WeekGridUp),
+                                Char('l') | Right => Some(Msg::WeekGridRight),
+                                Char('h') | Left => Some(Msg::WeekGridLeft),
 
-                        Enter => Some(Msg::DrillDown),
+                                // Switch to details pane
+                                Tab => Some(Msg::ToggleWeekPane),
 
-                        _ => None,
+                                // Drill down to day view
+                                Enter => Some(Msg::DrillDown),
+
+                                // Open menu
+                                Char(' ') => Some(Msg::OpenPopup),
+
+                                // Week notes CRUD
+                                Char('n') => Some(Msg::AddWeekNote),
+                                Char('e') => Some(Msg::EditWeekNote),
+                                Char('d') => Some(Msg::DeleteWeekNote),
+                                // Week note navigation (use H/L for horizontal)
+                                Char('H') => Some(Msg::PrevWeekNote),
+                                Char('L') => Some(Msg::NextWeekNote),
+
+                                _ => None,
+                            },
+                            WeekPane::Details => match key.code {
+                                Esc => Some(Msg::SetWeekPane(WeekPane::Grid)), // Back to grid
+
+                                // Navigation within current section
+                                Char('j') | Down => Some(Msg::NextItem),
+                                Char('k') | Up => Some(Msg::PrevItem),
+
+                                // Section cycling
+                                Char(']') => Some(Msg::NextSection),
+                                Char('[') => Some(Msg::PrevSection),
+
+                                // Open popup for adding (Space)
+                                Char(' ') => Some(Msg::OpenPopup),
+
+                                // Switch back to grid pane
+                                Tab => Some(Msg::ToggleWeekPane),
+
+                                // Week notes CRUD (available from details too)
+                                Char('n') => Some(Msg::AddWeekNote),
+                                Char('e') => Some(Msg::EditWeekNote),
+                                Char('d') => Some(Msg::DeleteWeekNote),
+                                Char('H') => Some(Msg::PrevWeekNote),
+                                Char('L') => Some(Msg::NextWeekNote),
+
+                                _ => None,
+                            },
+                            WeekPane::Notes => match key.code {
+                                Esc => Some(Msg::SetWeekPane(WeekPane::Grid)), // Back to grid
+
+                                // Navigation within notes
+                                Char('j') | Down => Some(Msg::NextWeekNote),
+                                Char('k') | Up => Some(Msg::PrevWeekNote),
+
+                                // View full note
+                                Enter => Some(Msg::ViewWeekNote),
+                                Char('v') => Some(Msg::ViewWeekNote),
+
+                                // Week notes CRUD
+                                Char('n') => Some(Msg::AddWeekNote),
+                                Char('e') => Some(Msg::EditWeekNote),
+                                Char('d') => Some(Msg::DeleteWeekNote),
+
+                                // Switch to next pane
+                                Tab => Some(Msg::ToggleWeekPane),
+
+                                _ => None,
+                            },
+                        }
+                    },
+
+                    View::Day => {
+                        // Day view navigation depends on which pane is focused
+                        match day_pane {
+                            DayPane::Timeline => match key.code {
+                                Esc => Some(Msg::DrillUp), // Back to month view
+
+                                // Navigation within timeline
+                                Char('j') | Down => Some(Msg::TimelineDown),
+                                Char('k') | Up => Some(Msg::TimelineUp),
+
+                                // Day navigation
+                                Char('l') | Right => Some(Msg::NextDay),
+                                Char('h') | Left => Some(Msg::PrevDay),
+
+                                // Jump to current hour
+                                Char('g') => Some(Msg::GoToCurrentHour),
+
+                                // Switch to details pane
+                                Tab => Some(Msg::ToggleDayPane),
+
+                                // Open menu at selected hour
+                                Char(' ') => Some(Msg::OpenPopup),
+
+                                _ => None,
+                            },
+                            DayPane::Details => match key.code {
+                                Esc => Some(Msg::SetDayPane(DayPane::Timeline)), // Back to timeline
+
+                                // Navigation within current section
+                                Char('j') | Down => Some(Msg::NextItem),
+                                Char('k') | Up => Some(Msg::PrevItem),
+
+                                // Section cycling
+                                Char(']') => Some(Msg::NextSection),
+                                Char('[') => Some(Msg::PrevSection),
+
+                                // Open popup for adding (Space)
+                                Char(' ') => Some(Msg::OpenPopup),
+
+                                // Switch back to timeline pane
+                                Tab => Some(Msg::ToggleDayPane),
+
+                                _ => None,
+                            },
+                        }
                     },
                 }
             }),
@@ -311,21 +503,27 @@ impl Application for PlannerApp {
 }
 
 /// Drill down from current view.
+/// Hierarchy: Year → Month → Week → Day
 fn drill_down(model: PlannerModel) -> PlannerModel {
     match model.view {
         View::Year => model.with_view(View::Month),
-        View::Month => model.with_view(View::Day),
-        View::Week => model.with_view(View::Day),
+        View::Month => model.with_view(View::Week).reset_week_state(),
+        View::Week => {
+            // Update selected_date to the week grid selection before drilling down
+            let target_date = model.week_selected_date();
+            model.with_selected_date(target_date).with_view(View::Day).reset_day_state()
+        }
         View::Day => model, // Already at deepest level
     }
 }
 
 /// Drill up from current view.
+/// Hierarchy: Day → Week → Month → Year
 fn drill_up(model: PlannerModel) -> PlannerModel {
     match model.view {
         View::Year => model.with_should_quit(true), // Quit from year view
         View::Month => model.with_view(View::Year),
         View::Week => model.with_view(View::Month),
-        View::Day => model.with_view(View::Month),
+        View::Day => model.with_view(View::Week).reset_week_state(),
     }
 }

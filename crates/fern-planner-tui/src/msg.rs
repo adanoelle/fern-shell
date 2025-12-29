@@ -1,6 +1,6 @@
 //! Messages - all possible events in the planner.
 
-use crate::model::{DetailsFocus, MonthPane, View};
+use crate::model::{DayPane, DetailsFocus, MonthPane, View, WeekPane};
 use chrono::NaiveDate;
 
 /// All possible messages/events in the planner application.
@@ -52,6 +52,46 @@ pub enum Msg {
     /// Set the details focus directly
     SetDetailsFocus(DetailsFocus),
 
+    // === Day View Navigation ===
+    /// Toggle between timeline and details panes in day view (Tab)
+    ToggleDayPane,
+    /// Set the day pane directly
+    SetDayPane(DayPane),
+    /// Move up in timeline (k in timeline pane)
+    TimelineUp,
+    /// Move down in timeline (j in timeline pane)
+    TimelineDown,
+    /// Jump to current hour (g in timeline pane)
+    GoToCurrentHour,
+
+    // === Week View Navigation ===
+    /// Toggle between grid and details panes in week view (Tab)
+    ToggleWeekPane,
+    /// Set the week pane directly
+    SetWeekPane(WeekPane),
+    /// Move up in week grid (k in grid pane)
+    WeekGridUp,
+    /// Move down in week grid (j in grid pane)
+    WeekGridDown,
+    /// Move left in week grid (h in grid pane)
+    WeekGridLeft,
+    /// Move right in week grid (l in grid pane)
+    WeekGridRight,
+    /// Navigate to next week note
+    NextWeekNote,
+    /// Navigate to previous week note
+    PrevWeekNote,
+    /// Add a new week note (n)
+    AddWeekNote,
+    /// Edit the selected week note (e)
+    EditWeekNote,
+    /// Delete the selected week note (d)
+    DeleteWeekNote,
+    /// Submit the week note (Enter in popup)
+    SubmitWeekNote,
+    /// View the selected week note in full (Enter/v)
+    ViewWeekNote,
+
     // === Popup / Input ===
     /// Open popup for adding to current section (Space)
     OpenPopup,
@@ -81,6 +121,10 @@ pub enum Msg {
     EventFormPrevField,
     /// Toggle the all-day checkbox (Space on AllDay field)
     ToggleAllDay,
+    /// Toggle start time AM/PM (Space on StartAmPm field)
+    ToggleStartAmPm,
+    /// Toggle end time AM/PM (Space on EndAmPm field)
+    ToggleEndAmPm,
     /// Append a character to current event form field
     EventInputChar(char),
     /// Remove last character from current event form field
