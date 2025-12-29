@@ -124,6 +124,14 @@ impl FernPaths {
         self.state_dir.join("services.json")
     }
 
+    /// Returns the path to the planner database.
+    ///
+    /// This SQLite database stores calendar events, goals, and intentions.
+    #[must_use]
+    pub fn planner_db(&self) -> PathBuf {
+        self.data_dir.join("planner.db")
+    }
+
     /// Ensures all required directories exist, creating them if necessary.
     ///
     /// # Errors
