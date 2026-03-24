@@ -67,5 +67,7 @@ pub mod cli;
 #[cfg(feature = "tui")]
 pub mod tui;
 
-pub use domain::{Action, AppState, KnownService, LogBuffer, LogEntry, LogLevel, PanelFocus};
+pub use domain::{
+    Action, AppState, HardwareState, KnownService, LogBuffer, LogEntry, LogLevel, PanelFocus,
+};
 pub use error::{FernctlError, Result};

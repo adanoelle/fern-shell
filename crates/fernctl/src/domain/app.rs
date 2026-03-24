@@ -6,6 +6,7 @@
 //! the `update` function which returns a new state.
 
 use super::action::{Action, ConfigSummary};
+use super::hardware::HardwareState;
 use super::log::LogBuffer;
 use super::service::KnownService;
 use fern_core::state::{ServiceInfo, ServiceRegistry, ServiceStatus};
@@ -17,6 +18,8 @@ pub enum PanelFocus {
     /// Services panel (top-left).
     #[default]
     Services,
+    /// Hardware sensor panel.
+    Hardware,
     /// Logs panel (right).
     Logs,
     /// Config panel (bottom-left).
@@ -28,7 +31,8 @@ impl PanelFocus {
     #[must_use]
     pub const fn next(self) -> Self {
         match self {
-            Self::Services => Self::Logs,
+            Self::Services => Self::Hardware,
+            Self::Hardware => Self::Logs,
             Self::Logs => Self::Config,
             Self::Config => Self::Services,
         }
@@ -39,7 +43,8 @@ impl PanelFocus {
     pub const fn prev(self) -> Self {
         match self {
             Self::Services => Self::Config,
-            Self::Logs => Self::Services,
+            Self::Hardware => Self::Services,
+            Self::Logs => Self::Hardware,
             Self::Config => Self::Logs,
         }
     }
@@ -56,6 +61,9 @@ pub struct AppState {
 
     /// Registry of all services and their status.
     pub services: ServiceRegistry,
+
+    /// Hardware sensor state with sparkline history.
+    pub hardware: HardwareState,
 
     /// Log entry buffer.
     pub logs: LogBuffer,
@@ -93,6 +101,7 @@ impl AppState {
         Self {
             paths: FernPaths::new(),
             services,
+            hardware: HardwareState::new(),
             logs: LogBuffer::default(),
             config: ConfigSummary::default(),
             focus: PanelFocus::default(),
@@ -173,6 +182,14 @@ impl AppState {
                 // This action is handled by the adapter, state doesn't change
             }
 
+            Action::SensorTick(snapshot) => {
+                self.hardware.push(snapshot);
+            }
+
+            Action::SelectChip(index) => {
+                self.hardware.selected_chip = index;
+            }
+
             Action::FocusNext => {
                 self.focus = self.focus.next();
             }
@@ -193,6 +210,13 @@ impl AppState {
                             self.selected_service = (self.selected_service + 1) % count;
                         }
                     }
+                    PanelFocus::Hardware => {
+                        let count = self.hardware.chip_count();
+                        if count > 0 {
+                            self.hardware.selected_chip =
+                                (self.hardware.selected_chip + 1) % count;
+                        }
+                    }
                     PanelFocus::Logs => {
                         self.logs.select_next();
                     }
@@ -209,6 +233,16 @@ impl AppState {
                         if count > 0 {
                             self.selected_service = self
                                 .selected_service
+                                .checked_sub(1)
+                                .unwrap_or(count.saturating_sub(1));
+                        }
+                    }
+                    PanelFocus::Hardware => {
+                        let count = self.hardware.chip_count();
+                        if count > 0 {
+                            self.hardware.selected_chip = self
+                                .hardware
+                                .selected_chip
                                 .checked_sub(1)
                                 .unwrap_or(count.saturating_sub(1));
                         }
@@ -284,6 +318,9 @@ mod tests {
         let mut focus = PanelFocus::Services;
 
         focus = focus.next();
+        assert_eq!(focus, PanelFocus::Hardware);
+
+        focus = focus.next();
         assert_eq!(focus, PanelFocus::Logs);
 
         focus = focus.next();
@@ -303,10 +340,13 @@ mod tests {
         assert_eq!(state.focus, PanelFocus::Services);
 
         state.update(Action::FocusNext);
+        assert_eq!(state.focus, PanelFocus::Hardware);
+
+        state.update(Action::FocusNext);
         assert_eq!(state.focus, PanelFocus::Logs);
 
         state.update(Action::FocusPrev);
-        assert_eq!(state.focus, PanelFocus::Services);
+        assert_eq!(state.focus, PanelFocus::Hardware);
     }
 
     #[test]

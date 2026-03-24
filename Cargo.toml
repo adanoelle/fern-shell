@@ -19,6 +19,7 @@ members = [
     "crates/fern-core",
     "crates/fern-theme",
     "crates/fern-obs",
+    "crates/fern-sysmon",
     "crates/fernctl",
     "crates/frond",
     "crates/fern-calendar",
@@ -37,6 +38,7 @@ authors = ["Fern Shell Contributors"]
 [workspace.dependencies]
 # Internal crates
 fern-core = { path = "crates/fern-core" }
+fern-sysmon = { path = "crates/fern-sysmon" }
 fern-theme = { path = "crates/fern-theme" }
 frond = { path = "crates/frond" }
 fern-calendar = { path = "crates/fern-calendar" }
@@ -85,6 +87,9 @@ once_cell = "1.19"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
 tracing-appender = "0.2"
+
+# === Time ===
+chrono = { version = "0.4", features = ["serde"] }
 
 # === TUI (future) ===
 ratatui = "0.29"

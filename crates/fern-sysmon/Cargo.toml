@@ -1,0 +1,48 @@
+[package]
+name = "fern-sysmon"
+description = """
+Hardware sensor monitoring library for Fern Shell.
+
+Provides structured access to lm_sensors hardware data, NVIDIA GPU status via NVML,
+and systemd unit state via D-Bus. Designed to be polled from fernctl's TUI event loop.
+"""
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+keywords = ["fern-shell", "monitoring", "sensors", "hardware", "systemd"]
+categories = ["hardware-support", "os::linux-apis"]
+
+[features]
+default = ["nvidia"]
+nvidia = ["dep:nvml-wrapper"]
+
+[dependencies]
+# === Hardware Sensors ===
+lm-sensors = "0.2"
+
+# === NVIDIA GPU (optional) ===
+nvml-wrapper = { version = "0.10", optional = true }
+
+# === Systemd D-Bus ===
+zbus = { workspace = true }
+
+# === Error Handling ===
+thiserror = { workspace = true }
+
+# === Serialization ===
+serde = { workspace = true }
+
+# === Time ===
+chrono = { workspace = true }
+
+# === Async Runtime (for zbus) ===
+tokio = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+
+[lints]
+workspace = true

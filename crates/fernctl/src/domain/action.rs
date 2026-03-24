@@ -7,6 +7,7 @@
 use super::log::LogEntry;
 use super::service::KnownService;
 use fern_core::ServiceInfo;
+use fern_sysmon::SystemSnapshot;
 use serde::{Deserialize, Serialize};
 
 /// Actions that can be dispatched to update application state.
@@ -62,6 +63,13 @@ pub enum Action {
         /// Theme name to apply.
         name: String,
     },
+
+    // === Hardware Sensor Actions ===
+    /// A new sensor snapshot arrived from the polling loop.
+    SensorTick(SystemSnapshot),
+
+    /// Navigate to a specific chip in the hardware panel.
+    SelectChip(usize),
 
     // === TUI Navigation Actions ===
     /// Move focus to the next panel.
